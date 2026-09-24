@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acompanhamento Consignado | Bradesco Expresso</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/lateral.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/interacao.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/rotina.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/detalhe.css') }}">
+</head>
+<body>
+    {% block conteudo %}{% endblock %}
+    <script src="{{ url_for('static', filename='vendor/chart.umd.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

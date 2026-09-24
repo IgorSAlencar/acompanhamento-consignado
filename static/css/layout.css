@@ -1,0 +1,161 @@
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: var(--fonte);
+    color: var(--texto);
+    background: var(--fundo);
+}
+
+.container {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* ---------------- Topo (vermelho protagonista, marca em negativo) -------- */
+.topo {
+    background: var(--vermelho);
+    color: var(--branco);
+    padding: 14px 24px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.topo-marca {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.marca {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
+.topo-titulo {
+    font-size: 14px;
+    opacity: 0.92;
+}
+
+.abas {
+    display: flex;
+    gap: 4px;
+}
+
+.aba {
+    border: none;
+    background: transparent;
+    color: var(--branco);
+    font: inherit;
+    font-weight: 600;
+    padding: 10px 22px;
+    cursor: pointer;
+    border-radius: var(--raio) var(--raio) 0 0;
+    opacity: 0.85;
+}
+
+.aba:hover { opacity: 1; }
+
+.aba.ativa {
+    background: var(--fundo);
+    color: var(--vermelho);
+    opacity: 1;
+}
+
+/* ---------------- Secoes ---------------- */
+.secao { margin: 26px 0; }
+
+.secao-titulo {
+    font-size: 17px;
+    margin: 0 0 12px;
+    padding-left: 10px;
+    border-left: 4px solid var(--vermelho);
+}
+
+.secao-titulo {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+/* Selo com o periodo de referencia dos dados */
+.periodo-ref {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--texto-suave);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.periodo-ref:empty { display: none; }
+
+.periodo-ref::before {
+    content: "";
+    width: 12px;
+    height: 12px;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'%3E%3Crect x='3' y='5' width='18' height='16' rx='2'/%3E%3Cpath d='M3 10h18M8 3v4M16 3v4'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'%3E%3Crect x='3' y='5' width='18' height='16' rx='2'/%3E%3Cpath d='M3 10h18M8 3v4M16 3v4'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.secao-titulo .periodo-ref {
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--cinza-100);
+    border: 1px solid var(--borda);
+}
+
+.cartao .periodo-ref {
+    margin-top: auto;
+    padding-top: 8px;
+    border-top: 1px dashed var(--borda);
+    font-weight: 500;
+}
+
+.cartao.destaque .periodo-ref {
+    color: rgba(255, 255, 255, 0.85);
+    border-top-color: rgba(255, 255, 255, 0.3);
+}
+
+.secao-nota {
+    margin: -6px 0 12px;
+    font-size: 12px;
+    color: var(--texto-suave);
+}
+
+.painel {
+    background: var(--branco);
+    border: 1px solid var(--borda);
+    border-radius: var(--raio);
+    box-shadow: var(--sombra);
+    padding: 16px;
+}
+
+.painel-tabela { padding: 0; overflow: auto; max-height: 520px; }
+
+.painel-tabela thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.grafico-area { position: relative; }
+
+.rodape {
+    text-align: center;
+    color: var(--texto-suave);
+    font-size: 12px;
+    padding: 24px 0 32px;
+}
+
+@media (max-width: 760px) {
+    .topo-titulo { font-size: 12px; }
+}

@@ -1,0 +1,25 @@
+---
+description: Contexto do cockpit Consignado Bradesco Expresso — arquitetura, regras de dados e restrições
+alwaysApply: true
+---
+
+# Projeto Consignado Expresso
+
+Antes de alterar código, leia `AGENTS.md` na raiz (mapa completo). Resumo obrigatório:
+
+## Arquitetura
+- Flask: `app.py` → `routes/` → `services/` → `repositories/query_runner.py` → `sql/app/*.sql`
+- Front: ES modules em `static/js/` (orquestrado por `main.js`); templates em `templates/`
+- SQL Server via pyodbc + Trusted Connection (`config.py` / `.env`)
+
+## Regras de dados (não quebrar)
+- Valor de produção = só `AVERBADO`; aguardando/não averbado à parte
+- Cobertura = lojas **ativas** no período (`TB_INDICADORES_BE`); produção/tentativas **não** filtram ativas
+- Tentativas: `DATA_ETAPA` com `CAST(? AS DATE)` (servidor em dmy)
+- Tokens `/*TOKEN*/` só com whitelist no Python; valores com `?`
+
+## Ao editar
+- Não sobrescrever `.env` sem confirmação
+- Não usar mocks em runtime
+- Preferir estender service + sql/app + JS modular existentes
+- CSV: valores cheios, separador `;`

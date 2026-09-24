@@ -1,0 +1,44 @@
+/* Tokens da marca Bradesco (guideline_cores_bradesco.md) */
+:root {
+    /* Cores principais */
+    --vermelho: #CC092F;
+    --vermelho-escuro: #900F15;
+    --branco: #FFFFFF;
+    --preto: #000000;
+
+    /* Vermelhos de apoio */
+    --vermelho-apoio-1: #D12244;
+    --vermelho-apoio-2: #E00B39;
+    --vermelho-apoio-3: #BA0A29;
+    --vermelho-apoio-4: #A5091B;
+
+    /* Cinzas frios (institucional / varejo / digital) */
+    --cinza-100: #EDEDED;
+    --cinza-300: #BCBEC0;
+    --cinza-400: #A7A9AC;
+    --cinza-500: #939598;
+    --cinza-600: #808285;
+
+    /* Neutros quentes (apoio) */
+    --neutro-100: #F8F6F0;
+    --neutro-200: #ECE7DE;
+    --neutro-300: #E5DFD7;
+
+    /* Semanticos da interface */
+    --texto: #2B2B2B;
+    --texto-suave: var(--cinza-600);
+    --fundo: #FAFAFA;
+    --borda: var(--cinza-100);
+
+    /* Tintas por produto (papel secundario, base clara, cores solidas) */
+    --tinta-inss: #FBEEF0;
+    --tinta-inss-forte: #F8DDE2;
+    --tinta-privado: #EDEDED;
+    --tinta-privado-forte: #DEDEDE;
+    --tinta-publico: #F8F6F0;
+    --tinta-publico-forte: #ECE7DE;
+
+    --sombra: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --raio: 10px;
+    --fonte: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+}

@@ -1,0 +1,299 @@
+/* ---------------- Cartoes de KPI ---------------- */
+.cartoes {
+    display: grid;
+    grid-template-columns: 1.25fr repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 18px;
+}
+
+/* Quebra pela largura da area de conteudo (a lateral de filtros ocupa parte da tela) */
+@container conteudo (max-width: 1080px) {
+    .cartoes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@container conteudo (max-width: 600px) {
+    .cartoes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.cartao {
+    background: var(--branco);
+    border: 1px solid var(--borda);
+    border-radius: var(--raio);
+    box-shadow: var(--sombra);
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.cartao.destaque {
+    background: var(--vermelho);
+    border-color: var(--vermelho);
+    color: var(--branco);
+}
+
+.cartao-rotulo {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--texto-suave);
+}
+
+.cartao.destaque .cartao-rotulo,
+.cartao.destaque .cartao-detalhe { color: rgba(255, 255, 255, 0.85); }
+
+/* Valor cheio: encolhe com a largura do card em vez de ser cortado */
+.cartao-valor {
+    font-size: clamp(18px, 2cqi, 26px);
+    line-height: 1.2;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.3px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cartao { min-width: 0; }
+
+.cartao-detalhe {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+    font-size: 12px;
+    color: var(--texto-suave);
+}
+
+.cartao-selo {
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: var(--tinta-inss-forte);
+    color: var(--vermelho-escuro);
+    font-weight: 700;
+}
+
+/* ---------------- Tabelas ---------------- */
+.tabela {
+    width: 100%;
+    border-collapse: separate; /* necessario para o cabecalho fixo nao vazar */
+    border-spacing: 0;
+    font-size: 13px;
+}
+
+.tabela th, .tabela td {
+    padding: 10px 12px;
+    text-align: center;
+    border-bottom: 1px solid var(--borda);
+    white-space: nowrap;
+}
+
+.tabela thead th {
+    background: var(--vermelho-escuro);
+    color: var(--branco);
+    font-weight: 600;
+    height: 38px; /* altura fixa (border-box) para calcular o offset da 2a linha */
+}
+
+/* Cabecalho com duas linhas: a segunda gruda logo abaixo da primeira */
+.painel-tabela thead tr:nth-child(2) th { top: 38px; }
+
+/* Colunas ordenaveis */
+.tabela th[data-chave] {
+    cursor: pointer;
+    user-select: none;
+}
+
+.tabela th[data-chave]::after {
+    content: " \2195"; /* seta dupla discreta */
+    opacity: 0.45;
+    font-size: 11px;
+}
+
+.tabela th[data-chave][data-direcao="asc"]::after  { content: " \25B2"; opacity: 1; }
+.tabela th[data-chave][data-direcao="desc"]::after { content: " \25BC"; opacity: 1; }
+
+.tabela tbody tr:hover { background: var(--fundo); }
+
+.tabela .col-inss    { background: var(--tinta-inss); }
+.tabela .col-privado { background: var(--tinta-privado); }
+.tabela .col-publico { background: var(--tinta-publico); }
+
+.tabela thead .col-inss    { background: var(--vermelho); }
+.tabela thead .col-privado { background: var(--cinza-600); }
+.tabela thead .col-publico { background: var(--cinza-400); }
+
+.tabela .valor-total {
+    color: var(--vermelho);
+    font-weight: 700;
+}
+
+.tabela .celula-produto strong { display: block; }
+
+.tabela .celula-produto small {
+    display: block;
+    font-size: 11px;
+    line-height: 1.4;
+    color: var(--texto);
+    white-space: nowrap;
+}
+
+.tabela .celula-produto small.aguardando { color: #8A5A00; }
+
+.carregando, .vazio {
+    color: var(--texto-suave);
+    padding: 28px !important;
+    text-align: center;
+}
+
+/* Coluna com o nivel "pai" (Ger. Gestao / Ger. Comercial III de origem) */
+.tabela .celula-pai,
+.tabela .celula-hierarquia {
+    font-size: 12px;
+    color: var(--texto-suave);
+    text-align: left;
+    white-space: nowrap;
+}
+
+/* Linha clicavel (drill-down da equipe) */
+.linha-drill { cursor: pointer; }
+
+.linha-drill .celula-nome {
+    color: var(--vermelho);
+    font-weight: 600;
+    text-align: left;
+}
+
+/* ---------------- Equipe: migalhas e chips ---------------- */
+.equipe-controles {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+/* Seletor de nivel da Equipe */
+.nivel-abas {
+    display: flex;
+    border: 1px solid var(--cinza-300);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.nivel-aba {
+    border: none;
+    background: var(--branco);
+    color: var(--texto);
+    font: inherit;
+    font-size: 13px;
+    padding: 8px 14px;
+    cursor: pointer;
+}
+
+.nivel-aba + .nivel-aba { border-left: 1px solid var(--cinza-300); }
+
+.nivel-aba.ativa {
+    background: var(--vermelho);
+    color: var(--branco);
+    font-weight: 600;
+}
+
+.migalhas { display: flex; gap: 6px; align-items: center; font-size: 13px; }
+
+.migalha {
+    border: none;
+    background: transparent;
+    color: var(--vermelho);
+    font: inherit;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 2px 4px;
+}
+
+.migalha[disabled] {
+    color: var(--texto);
+    text-decoration: none;
+    font-weight: 700;
+    cursor: default;
+}
+
+.migalha-separador { color: var(--cinza-400); }
+
+.chips { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.chip {
+    font-size: 12px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: var(--cinza-100);
+    color: var(--texto);
+    border: 1px solid var(--cinza-300);
+}
+
+.chip.alerta {
+    background: var(--tinta-inss-forte);
+    border-color: var(--vermelho-apoio-1);
+    color: var(--vermelho-escuro);
+    font-weight: 600;
+}
+
+.chip-filtro {
+    cursor: pointer;
+    font-family: inherit;
+    transition: box-shadow 0.15s, background 0.15s;
+}
+
+.chip-filtro:hover:not(:disabled) { box-shadow: 0 0 0 2px var(--vermelho-apoio-1); }
+
+.chip-filtro:disabled { cursor: default; opacity: 0.7; }
+
+.chip-filtro.ativo {
+    background: var(--vermelho);
+    border-color: var(--vermelho);
+    color: var(--branco);
+    font-weight: 700;
+}
+
+.tabela td.foco-sem-tentativa {
+    box-shadow: inset 0 0 0 2px var(--vermelho);
+}
+
+/* ---------------- Erro global ---------------- */
+.erro-global {
+    background: var(--tinta-inss-forte);
+    border: 1px solid var(--vermelho-apoio-1);
+    border-radius: var(--raio);
+    padding: 16px;
+    margin-top: 18px;
+    text-align: center;
+}
+
+.btn-vermelho {
+    background: var(--vermelho);
+    color: var(--branco);
+    border: none;
+    font: inherit;
+    font-weight: 600;
+    padding: 8px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.btn-vermelho:hover { background: var(--vermelho-apoio-3); }
+
+.oculto { display: none; }
+
+/* Skeleton de carregamento */
+.skeleton {
+    background: linear-gradient(90deg, var(--cinza-100) 25%, #f5f5f5 50%, var(--cinza-100) 75%);
+    background-size: 200% 100%;
+    animation: brilho 1.2s infinite;
+    border-radius: 4px;
+    color: transparent !important;
+}
+
+@keyframes brilho {
+    from { background-position: 200% 0; }
+    to   { background-position: -200% 0; }
+}

@@ -1,0 +1,84 @@
+/* ---------- Elementos clicaveis (abrem o detalhe por loja) ---------- */
+.clicavel { cursor: pointer; }
+
+.tabela td.clicavel:hover {
+    outline: 2px solid var(--vermelho);
+    outline-offset: -2px;
+}
+
+.cartao.clicavel { transition: transform 0.12s, box-shadow 0.12s; }
+
+.cartao.clicavel:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.dia-semana { color: var(--texto-suave); font-size: 11px; }
+
+.alerta-texto { color: var(--vermelho); font-weight: 700; }
+
+/* ---------- Barras de controle ---------- */
+.painel-barra {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.dica { font-size: 12px; color: var(--texto-suave); }
+
+.controles-direita { display: flex; gap: 12px; flex-wrap: wrap; }
+
+.filtro-inline {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--texto-suave);
+}
+
+.filtro-inline select,
+.campo-busca {
+    font: inherit;
+    font-size: 13px;
+    color: var(--texto);
+    padding: 7px 10px;
+    border: 1px solid var(--cinza-300);
+    border-radius: 6px;
+    background: var(--branco);
+}
+
+.campo-busca { min-width: 260px; flex: 1; }
+
+.caixa { display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
+
+.caixa input { accent-color: var(--vermelho); }
+
+.btn-secundario {
+    background: var(--branco);
+    color: var(--vermelho);
+    border: 1px solid var(--vermelho);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 7px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.btn-secundario:hover { background: var(--tinta-inss); }
+
+/* ---------- Selos de situacao do contrato ---------- */
+.selo {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.selo-ok     { background: #E3F1E6; color: #1E6B34; }
+.selo-espera { background: #FFF3D6; color: #8A5A00; }
+.selo-falha  { background: var(--tinta-inss-forte); color: var(--vermelho-escuro); }

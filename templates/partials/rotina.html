@@ -1,0 +1,47 @@
+<section class="secao">
+    <h2 class="secao-titulo">Rotina Di&aacute;ria da Equipe <span class="periodo-ref" data-periodo="rotina"></span></h2>
+    <ul class="rotina-legenda">
+        <li><span class="legenda-escala"></span>mais forte = maior resultado</li>
+        <li><span class="legenda-zero">0</span>dia &uacute;til sem tentativa</li>
+        <li><span class="legenda-clique">&#8599;</span>clique no dia para ver as lojas</li>
+    </ul>
+
+    <div class="equipe-controles">
+        <div class="nivel-abas" id="rotina-metricas" role="group" aria-label="Metrica">
+            <button type="button" class="nivel-aba ativa" data-metrica="tentativas">Tentativas</button>
+            <button type="button" class="nivel-aba" data-metrica="lojas">% lojas que tentaram</button>
+            <button type="button" class="nivel-aba" data-metrica="conversao">Convers&atilde;o</button>
+            <button type="button" class="nivel-aba" data-metrica="producao">Produ&ccedil;&atilde;o averbada</button>
+            <button type="button" class="nivel-aba" data-metrica="pendente"
+                title="Aguardando averba&ccedil;&atilde;o + n&atilde;o averbado: mostra quem est&aacute; produzindo mesmo sem averbar">N&atilde;o averbada</button>
+        </div>
+        <div class="controles-direita">
+            <label class="filtro-inline">N&iacute;vel
+                <select id="rotina-nivel">
+                    <option value="supervisao" selected>Ger. Comercial</option>
+                    <option value="coordenacao">Ger. Comercial III</option>
+                    <option value="gerencia">Ger. Gest&atilde;o</option>
+                </select>
+            </label>
+            <label class="filtro-inline">Janela
+                <select id="rotina-janela">
+                    <option value="7">&Uacute;ltimos 7 dias</option>
+                    <option value="15" selected>&Uacute;ltimos 15 dias</option>
+                    <option value="30">&Uacute;ltimos 30 dias</option>
+                    <option value="0">Per&iacute;odo todo</option>
+                </select>
+            </label>
+            <button type="button" class="btn-secundario" id="rotina-exportar"
+                title="Exporta a vis&atilde;o atual (n&iacute;vel, janela, m&eacute;trica e ordena&ccedil;&atilde;o) com valores cheios">Exportar CSV</button>
+        </div>
+    </div>
+
+    <div class="painel painel-tabela">
+        <table class="tabela tabela-rotina" id="tabela-rotina">
+            <thead id="rotina-cabecalho"></thead>
+            <tbody id="rotina-corpo">
+                <tr><td class="carregando">Carregando...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>

@@ -1,0 +1,30 @@
+<section class="secao">
+    <h2 class="secao-titulo">Detalhamento Di&aacute;rio por Produto <span class="periodo-ref" data-periodo="geral"></span></h2>
+    <p class="secao-nota">Valores em R$ consideram apenas contratos averbados. Aguardando averba&ccedil;&atilde;o e n&atilde;o averbados aparecem &agrave; parte.</p>
+    <div class="painel painel-tabela">
+        <table class="tabela" id="tabela-diaria">
+            <thead>
+                <tr>
+                    <th rowspan="2" data-chave="dia">Dia</th>
+                    <th colspan="2" class="col-inss">INSS</th>
+                    <th colspan="2" class="col-publico">P&uacute;blico</th>
+                    <th colspan="2" class="col-privado">Privado</th>
+                    <th rowspan="2" data-chave="total">Valor Averbado</th>
+                    <th rowspan="2" data-chave="aguardando">Ag. Averba&ccedil;&atilde;o</th>
+                    <th rowspan="2" data-chave="nao_averbado">N&atilde;o Averbado</th>
+                </tr>
+                <tr>
+                    <th class="col-inss" data-chave="inss">Oper. / R$</th>
+                    <th class="col-inss" data-chave="inss_tent">Tent. / Conv.</th>
+                    <th class="col-publico" data-chave="publico">Oper. / R$</th>
+                    <th class="col-publico" data-chave="publico_tent">Tent. / Conv.</th>
+                    <th class="col-privado" data-chave="privado">Oper. / R$</th>
+                    <th class="col-privado" data-chave="privado_tent">Tent. / Conv.</th>
+                </tr>
+            </thead>
+            <tbody id="tabela-diaria-corpo">
+                <tr><td colspan="10" class="carregando">Carregando...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>

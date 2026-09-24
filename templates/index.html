@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block conteudo %}
+{% include "partials/header.html" %}
+
+<div class="pagina">
+{% include "partials/filtros.html" %}
+
+<main class="conteudo">
+    <div id="erro-global" class="erro-global oculto">
+        <p id="erro-mensagem"></p>
+        <button type="button" id="btn-tentar-novamente" class="btn-vermelho">Tentar novamente</button>
+    </div>
+
+    {% include "partials/kpis.html" %}
+    {% include "partials/grafico.html" %}
+    {% include "partials/tabela.html" %}
+    {% include "partials/equipe.html" %}
+    {% include "partials/rotina.html" %}
+</main>
+</div>
+
+{% include "partials/detalhe.html" %}
+
+<footer class="rodape">
+    Acompanhamento de Consignado &middot; Bradesco Expresso
+</footer>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    window.APP_CONFIG = {
+        dataInicio: "{{ data_inicio }}",
+        dataHoje: "{{ data_hoje }}"
+    };
+</script>
+<script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% endblock %}
