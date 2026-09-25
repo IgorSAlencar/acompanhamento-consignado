@@ -15,8 +15,10 @@ Antes de alterar código, leia `AGENTS.md` na raiz (mapa completo). Resumo obrig
 ## Regras de dados (não quebrar)
 - Valor de produção = só `AVERBADO`; aguardando/não averbado à parte
 - Cobertura = lojas **ativas** no período (`TB_INDICADORES_BE`); produção/tentativas **não** filtram ativas
+- Produção diária: filtrar `DATA_TRX` (date) com `CAST(? AS DATE)`; `ANO_MES` é int AAAAMM (mês)
 - Tentativas: `DATA_ETAPA` com `CAST(? AS DATE)` (servidor em dmy)
 - Tokens `/*TOKEN*/` só com whitelist no Python; valores com `?`
+- Dia Útil: `MESU..TB_DIA_UTIL`; `QT_DIAS_UTEIS_MES = 0` conta como 1; comparar no mesmo DU; não cortar por ativas
 
 ## Ao editar
 - Não sobrescrever `.env` sem confirmação

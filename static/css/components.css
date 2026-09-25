@@ -34,6 +34,7 @@
 
 .cartao-rotulo {
     font-size: 12px;
+    line-height: 1.35;
     text-transform: uppercase;
     letter-spacing: 0.4px;
     color: var(--texto-suave);
@@ -94,6 +95,13 @@
     height: 38px; /* altura fixa (border-box) para calcular o offset da 2a linha */
 }
 
+/* Titulos longos quebram entre as palavras (a celula com rowspan acompanha as duas linhas) */
+.tabela thead th.th-quebra {
+    white-space: normal;
+    line-height: 1.25;
+    height: auto;
+}
+
 /* Cabecalho com duas linhas: a segunda gruda logo abaixo da primeira */
 .painel-tabela thead tr:nth-child(2) th { top: 38px; }
 
@@ -127,6 +135,11 @@
     font-weight: 700;
 }
 
+.sem-valor {
+    color: var(--cinza-400);
+    font-weight: 600;
+}
+
 .tabela .celula-produto strong { display: block; }
 
 .tabela .celula-produto small {
@@ -137,7 +150,10 @@
     white-space: nowrap;
 }
 
-.tabela .celula-produto small.aguardando { color: #8A5A00; }
+.tabela .celula-produto small.aguardando {
+    color: #8A5A00;
+    white-space: normal;
+}
 
 .carregando, .vazio {
     color: var(--texto-suave);
@@ -172,6 +188,8 @@
     gap: 10px;
     margin-bottom: 12px;
 }
+
+.equipe-controles .btn-secundario { margin-left: auto; }
 
 /* Seletor de nivel da Equipe */
 .nivel-abas {

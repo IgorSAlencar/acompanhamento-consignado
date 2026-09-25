@@ -1,8 +1,6 @@
 """Helpers compartilhados de filtros (hierarquia, loja, produto, situacao e periodo)."""
 from datetime import date
 
-from config import Config
-
 PRODUTOS = ("INSS", "PRIVADO", "PUBLICO")
 
 INDICADORES = {
@@ -27,26 +25,22 @@ _CAMPOS_HIERARQUIA = (
 )
 
 
+def inicio_mes_vigente() -> str:
+    """Primeiro dia do mes atual, usado como inicio padrao do filtro De."""
+    hoje = date.today()
+    return date(hoje.year, hoje.month, 1).isoformat()
+
+
 def periodo(args) -> tuple[str, str]:
     """Datas ini/fim no formato ISO (AAAA-MM-DD)."""
-    data_ini = args.get("data_ini") or Config.DATA_INICIO
+    data_ini = args.get("data_ini") or inicio_mes_vigente()
     data_fim = args.get("data_fim") or date.today().isoformat()
     return data_ini, data_fim
-
-
-def periodo_int(data_ini: str, data_fim: str) -> tuple[int, int]:
-    """Converte para o formato AAAAMMDD usado na coluna ANO_MES."""
-    return int(data_ini.replace("-", "")), int(data_fim.replace("-", ""))
 
 
 def periodo_mes(data_ini: str, data_fim: str) -> tuple[int, int]:
     """Meses AAAAMM do periodo (usado em TB_INDICADORES_BE.PERIODO)."""
     return int(data_ini[:4] + data_ini[5:7]), int(data_fim[:4] + data_fim[5:7])
-
-
-def dia_int_para_iso(dia_int: int) -> str:
-    texto = str(dia_int)
-    return f"{texto[:4]}-{texto[4:6]}-{texto[6:]}"
 
 
 def dias_do_periodo(data_ini: str, data_fim: str) -> list[str]:

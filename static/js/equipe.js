@@ -1,10 +1,11 @@
 // Secao Equipe: visao por nivel com pais, ordenacao, drill-down e chips
 import { buscar } from "./api.js";
+import { exportarEquipe } from "./equipe-exportar.js";
 import { abrirDetalhe } from "./detalhe.js";
 import { NOMES_PRODUTO } from "./detalhe-colunas.js";
 import { estado, parametros } from "./estado.js";
 import { descricaoDe, selecionar } from "./filtros.js";
-import { inteiro, moedaCompacta, percentual } from "./formato.js";
+import { inteiro, moedaCompacta, percentual, semValor, textoLojas } from "./formato.js";
 import { configurarOrdenacao, ordenar } from "./ordenacao.js";
 
 const ROTULOS = {
@@ -34,12 +35,15 @@ function celulaProduto(produto, nome) {
         ? `${inteiro(produto.tentativas)} tent. &middot; ${percentual(produto.pct_conversao)} conv.`
         : '<span class="alerta-texto">Sem tentativa</span>';
     const aguardando = produto.vlr_aguardando > 0
-        ? `<small class="aguardando">+ ${moedaCompacta(produto.vlr_aguardando)} ag. averba&ccedil;&atilde;o</small>`
+        ? `<small class="aguardando">+ ${moedaCompacta(produto.vlr_aguardando)} aguardando averba&ccedil;&atilde;o</small>`
         : "";
+    const producao = produto.vlr || produto.qtd
+        ? `<strong>${moedaCompacta(produto.vlr)}</strong>
+            <small>${inteiro(produto.qtd)} oper. &middot; ${textoLojas(produto.lojas)} &middot; ${conversao}</small>`
+        : (produto.tentativas ? `<small>${conversao}</small>` : semValor());
     return `
         <td class="${classe} celula-produto" data-produto="${nome}">
-            <strong>${moedaCompacta(produto.vlr)}</strong>
-            <small>${inteiro(produto.qtd)} oper. &middot; ${conversao}</small>
+            ${producao}
             ${aguardando}
         </td>`;
 }
@@ -118,11 +122,15 @@ function aoClicarChip(evento) {
     atualizarCorpo();
 }
 
-function atualizarCorpo() {
+function linhasAtuais() {
     let linhas = dadosCache.linhas;
     if (filtroSemTentativa) linhas = linhas.filter((l) => l.produtos[filtroSemTentativa].tentativas === 0);
     if (ordem) linhas = ordenar(linhas, EXTRATORES[ordem.chave], ordem.crescente);
-    renderizarCorpo(linhas);
+    return linhas;
+}
+
+function atualizarCorpo() {
+    renderizarCorpo(linhasAtuais());
 }
 
 function renderizarCorpo(linhas) {
@@ -196,6 +204,15 @@ export function iniciarControlesEquipe(recarregarTudo) {
 
     document.getElementById("tabela-equipe-corpo").addEventListener("click", aoClicarCorpo);
     document.getElementById("equipe-chips").addEventListener("click", aoClicarChip);
+    document.getElementById("equipe-exportar").addEventListener("click", () => {
+        if (!dadosCache) return;
+        exportarEquipe({
+            dados: dadosCache,
+            linhas: linhasAtuais(),
+            dataIni: estado.dataIni,
+            dataFim: estado.dataFim,
+        });
+    });
 
     configurarOrdenacao("tabela-equipe", (chave, crescente) => {
         ordem = { chave, crescente };

@@ -40,14 +40,17 @@ export function agrupar(lojas, nivel) {
     lojas.forEach((l) => {
         const chave = l[nivel] || "Sem hierarquia";
         if (!grupos.has(chave)) {
-            const base = { [nivel]: chave, qtd_lojas: 0, qtd_lojas_mov: 0 };
+            const base = { [nivel]: chave, qtd_lojas: 0, qtd_lojas_ativas: 0, qtd_lojas_mov: 0 };
             pais.forEach((p) => { base[p] = l[p]; });
             CAMPOS_SOMA.forEach((c) => { base[c] = 0; });
             grupos.set(chave, base);
         }
         const g = grupos.get(chave);
         g.qtd_lojas += 1;
-        if (temMovimento(l)) g.qtd_lojas_mov += 1;
+        if (l.ativa) {
+            g.qtd_lojas_ativas += 1;
+            if (temMovimento(l)) g.qtd_lojas_mov += 1;
+        }
         CAMPOS_SOMA.forEach((c) => { g[c] += l[c]; });
     });
     return [...grupos.values()].map((g) => ({
@@ -63,7 +66,7 @@ export function colunasGrupo(nivel) {
         .map((c) => (c.chave === nivel ? { ...c, classe: "texto-esquerda celula-nome-grupo" } : c));
     const lojas = {
         chave: "qtd_lojas", rotulo: "Lojas c/ movimento", valor: (g) => g.qtd_lojas_mov,
-        html: (g) => `${inteiro(g.qtd_lojas_mov)}<small>de ${inteiro(g.qtd_lojas)}</small>`,
+        html: (g) => `${inteiro(g.qtd_lojas_mov)}<small>de ${inteiro(g.qtd_lojas_ativas)} ativas</small>`,
         csv: (g) => g.qtd_lojas_mov,
     };
     return [...hierarquia, lojas, ...COLUNAS_METRICAS];

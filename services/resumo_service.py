@@ -5,7 +5,6 @@ from services.filtros_comuns import (
     filtro_produto_producao,
     filtro_produto_tentativas,
     periodo,
-    periodo_int,
     periodo_mes,
 )
 
@@ -13,7 +12,6 @@ from services.filtros_comuns import (
 def obter_resumo(args) -> dict:
     frag_h, params_h = filtro_hierarquia(args)
     data_ini, data_fim = periodo(args)
-    ini_int, fim_int = periodo_int(data_ini, data_fim)
     mes_ini, mes_fim = periodo_mes(data_ini, data_fim)
 
     frag_pp, params_pp = filtro_produto_producao(args)
@@ -21,7 +19,7 @@ def obter_resumo(args) -> dict:
 
     producao = run_query(
         "resumo_producao",
-        params_h + [ini_int, fim_int] + params_pp,
+        params_h + [data_ini, data_fim] + params_pp,
         {"FILTROS": frag_h, "PRODUTO": frag_pp},
     )[0]
 
@@ -33,7 +31,7 @@ def obter_resumo(args) -> dict:
 
     cobertura = run_query(
         "cobertura",
-        params_h + [mes_ini, mes_fim, ini_int, fim_int] + params_pp,
+        params_h + [mes_ini, mes_fim, data_ini, data_fim] + params_pp,
         {"FILTROS": frag_h, "PRODUTO": frag_pp},
     )[0]
 

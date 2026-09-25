@@ -18,8 +18,8 @@
 
 .lateral {
     position: sticky;
-    top: 16px;
-    max-height: calc(100vh - 32px);
+    top: calc(var(--topo-altura) + 12px);
+    max-height: calc(100vh - var(--topo-altura) - 24px);
     overflow-y: auto;
     display: flex;
     flex-direction: column;

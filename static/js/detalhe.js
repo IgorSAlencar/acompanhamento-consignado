@@ -65,7 +65,7 @@ function migalhas() {
 
 function renderizarCabecalho() {
     $("detalhe-cabecalho").innerHTML = `<tr>${visao.colunas
-        .map((c) => `<th data-chave="${c.chave}">${c.rotulo}</th>`).join("")}</tr>`;
+        .map((c) => `<th data-chave="${c.chave}"${c.rotuloHtml ? ' class="th-quebra"' : ""}>${c.rotuloHtml || c.rotulo}</th>`).join("")}</tr>`;
 }
 
 function renderizarTabela() {

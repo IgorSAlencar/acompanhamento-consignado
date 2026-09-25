@@ -1,13 +1,12 @@
 """Drill-down ate o maior detalhe: numero -> lojas -> contratos / tentativas da loja."""
 from repositories.query_runner import run_query
 from services.filtros_comuns import (
-    dia_int_para_iso,
     filtro_hierarquia,
     filtro_produto_producao,
     filtro_produto_tentativas,
     filtro_situacao,
     periodo,
-    periodo_int,
+    periodo_mes,
     produto_do_indicador,
 )
 
@@ -22,7 +21,7 @@ def _formatar_cpf(cpf: str) -> str:
 def obter_lojas(args) -> list[dict]:
     frag_h, params_h = filtro_hierarquia(args)
     data_ini, data_fim = periodo(args)
-    ini_int, fim_int = periodo_int(data_ini, data_fim)
+    mes_ini, mes_fim = periodo_mes(data_ini, data_fim)
     frag_pp, params_pp = filtro_produto_producao(args)
     frag_pt, params_pt = filtro_produto_tentativas(args)
     frag_s, params_s = filtro_situacao(args)
@@ -30,7 +29,7 @@ def obter_lojas(args) -> list[dict]:
 
     linhas = run_query(
         "detalhe_lojas",
-        params_h + [ini_int, fim_int] + params_pp + params_s + [data_ini, data_fim] + params_pt,
+        [mes_ini, mes_fim] + params_h + [data_ini, data_fim] + params_pp + params_s + [data_ini, data_fim] + params_pt,
         {
             "FILTROS": frag_h,
             "PRODUTO_P": frag_pp,
@@ -58,6 +57,7 @@ def obter_lojas(args) -> list[dict]:
             "vlr_aguardando": float(l["VLR_AGUARDANDO"]),
             "qtd_nao_averbado": int(l["QTD_NAO_AVERBADO"]),
             "vlr_nao_averbado": float(l["VLR_NAO_AVERBADO"]),
+            "ativa": bool(l["ATIVA"]),
             "qtd_tentativas": tent,
             "qtd_convertidas": conv,
             "pct_conversao": round(100 * conv / tent, 1) if tent else 0.0,
@@ -69,14 +69,13 @@ def obter_loja(args) -> dict:
     """Contratos e tentativas por dia de uma loja especifica."""
     chave_loja = int(args["loja"])
     data_ini, data_fim = periodo(args)
-    ini_int, fim_int = periodo_int(data_ini, data_fim)
     frag_pp, params_pp = filtro_produto_producao(args)
     frag_pt, params_pt = filtro_produto_tentativas(args)
     frag_s, params_s = filtro_situacao(args)
 
     contratos = run_query(
         "detalhe_contratos",
-        [chave_loja, ini_int, fim_int] + params_pp + params_s,
+        [chave_loja, data_ini, data_fim] + params_pp + params_s,
         {"PRODUTO": frag_pp, "SITUACAO": frag_s},
     )
     tentativas = run_query(
@@ -88,7 +87,7 @@ def obter_loja(args) -> dict:
     return {
         "contratos": [
             {
-                "dia": dia_int_para_iso(c["DIA_INT"]),
+                "dia": c["DIA"].isoformat(),
                 "produto": produto_do_indicador(c["INDICADOR"]),
                 "situacao": c["SITUACAO"],
                 "contrato": str(c["CONTRATO"]),

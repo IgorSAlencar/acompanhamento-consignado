@@ -1,0 +1,276 @@
+/* Aba "Dia Util": pagina propria com curvas por DU, cards de ritmo e ranking */
+
+/* Alternancia de modo: a aba Dia Util esconde o conteudo geral e o periodo */
+body:not(.modo-du) .secao-du { display: none; }
+body.modo-du #modo-geral { display: none; }
+body.modo-du .lateral-grupo-periodo { display: none; }
+
+/* ---------------- Barra de controles ---------------- */
+.du-controles {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 14px 22px;
+    margin-bottom: 18px;
+    position: sticky;
+    top: calc(var(--topo-altura) + 8px);
+    z-index: 12;
+}
+
+/* Cobre o conteudo que passa pelas bordas arredondadas enquanto a barra esta fixa */
+.du-controles::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    left: -6px;
+    right: -6px;
+    top: -10px;
+    bottom: -8px;
+    background: var(--fundo);
+}
+
+.du-controle {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.du-controle-rotulo {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--texto-suave);
+}
+
+.du-controle select {
+    font: inherit;
+    font-size: 13px;
+    padding: 8px 10px;
+    border: 1px solid var(--cinza-300);
+    border-radius: 8px;
+    background: var(--branco);
+    color: var(--texto);
+    min-width: 130px;
+}
+
+.du-controle select:focus {
+    outline: 2px solid var(--vermelho-apoio-1);
+    outline-offset: 1px;
+}
+
+/* ---------------- Grafico ---------------- */
+.secao-du .painel-barra .du-grafico-titulo {
+    font-weight: 600;
+    font-size: 14px;
+    margin-right: auto;
+}
+
+/* ---------------- Cards de ritmo ---------------- */
+.cartoes-du { margin-bottom: 18px; }
+
+.cartoes-du .cartao { position: relative; }
+.cartoes-du .cartao:hover,
+.cartoes-du .cartao:focus-within { z-index: 4; }
+
+.du-info-wrap {
+    display: inline-flex;
+    margin-left: 4px;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.du-info {
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid var(--cinza-400);
+    background: var(--branco);
+    color: var(--texto-suave);
+    font: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: help;
+}
+
+.du-info:hover,
+.du-info:focus-visible {
+    border-color: var(--vermelho);
+    color: var(--vermelho);
+    outline: none;
+}
+
+.du-tooltip {
+    display: none;
+    position: absolute;
+    top: 32px;
+    left: 8px;
+    right: 8px;
+    z-index: 8;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: var(--preto);
+    color: var(--branco);
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.45;
+    text-align: left;
+    text-transform: none;
+    letter-spacing: 0;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+}
+
+.du-tooltip strong { display: block; margin-bottom: 4px; }
+
+.du-tooltip span { display: block; margin-top: 6px; }
+
+.du-tooltip-conta {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.du-info:hover + .du-tooltip,
+.du-info:focus-visible + .du-tooltip { display: block; }
+
+/* ---------------- Ranking ---------------- */
+.du-ranking { margin-top: 22px; }
+
+.du-legenda-media {
+    margin: 0 0 10px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--texto-suave);
+}
+
+#du-tabela .celula-produto small { color: var(--texto-suave); }
+
+.du-busca {
+    font: inherit;
+    font-size: 13px;
+    padding: 8px 10px;
+    border: 1px solid var(--cinza-300);
+    border-radius: 8px;
+    min-width: 180px;
+    background: var(--branco);
+}
+
+.celula-codigo {
+    display: block;
+    font-weight: 600;
+    color: var(--texto-suave);
+}
+
+#du-tabela tfoot td {
+    background: var(--cinza-100);
+    font-weight: 700;
+    border-top: 2px solid var(--vermelho-escuro);
+}
+
+.du-comparar { position: relative; }
+
+.du-comparar-botao {
+    font: inherit;
+    font-size: 13px;
+    text-align: left;
+    padding: 8px 12px;
+    border: 1px solid var(--cinza-300);
+    border-radius: 8px;
+    background: var(--branco);
+    color: var(--texto);
+    min-width: 160px;
+    cursor: pointer;
+}
+
+.du-comparar-painel {
+    position: absolute;
+    z-index: 5;
+    top: calc(100% + 6px);
+    left: 0;
+    width: 230px;
+    padding: 10px;
+    background: var(--branco);
+    border: 1px solid var(--cinza-300);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.du-comparar-atalhos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.du-comparar-atalhos button {
+    font: inherit;
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--cinza-300);
+    background: var(--branco);
+    cursor: pointer;
+}
+
+.du-comparar-atalhos button.ativa {
+    background: var(--vermelho);
+    border-color: var(--vermelho);
+    color: var(--branco);
+}
+
+.du-comparar-dica {
+    margin: 0 0 8px;
+    font-size: 12px;
+    line-height: 1.35;
+    color: var(--texto-suave);
+}
+
+#du-comparar-meses {
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.du-comparar-mes {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 2px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.badge-status {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.badge-status.status-zerado  { background: var(--vermelho-escuro); color: var(--branco); }
+.badge-status.status-abaixo  { background: var(--tinta-inss-forte); color: var(--vermelho-escuro); border: 1px solid var(--vermelho-apoio-1); }
+.badge-status.status-atencao { background: #FFF3D6; color: #8A5A00; border: 1px solid #E8C36A; }
+.badge-status.status-padrao  { background: var(--cinza-100); color: var(--texto); border: 1px solid var(--cinza-300); }
+.badge-status.status-acima   { background: #E6F2EA; color: #1F6B3F; border: 1px solid #9CCBAD; }
+.badge-status.status-novo    { background: var(--neutro-200); color: var(--texto-suave); border: 1px solid var(--neutro-300); }
+
+.desvio-negativo { color: var(--vermelho-escuro); font-weight: 700; }
+.desvio-positivo { color: #1F6B3F; font-weight: 700; }
+
+.tabela .celula-parado { color: var(--vermelho-escuro); font-weight: 700; }
+
+/* ---------------- Painel da curva da loja ---------------- */
+.du-loja-painel { margin-top: 16px; }
+
+.du-loja-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.du-loja-acoes { display: flex; gap: 8px; }

@@ -27,12 +27,12 @@ routes/
   api.py               # blueprint /api/*
 sql/app/*.sql          # ÚNICAS consultas usadas em runtime
 static/
-  css/                 # tokens, layout, lateral, components, interacao, rotina, detalhe
+  css/                 # tokens, layout, lateral, components, interacao, rotina, detalhe, du
   js/                  # módulos ES (main.js orquestra)
   vendor/chart.umd.js
 templates/
   base.html, index.html
-  partials/            # header, filtros, kpis, grafico, tabela, equipe, rotina, detalhe
+  partials/            # header, filtros, kpis, grafico, tabela, equipe, rotina, detalhe, du
 ```
 
 Fluxo: `routes` → `services` → `run_query("arquivo")` → `sql/app/<arquivo>.sql`.
@@ -51,8 +51,13 @@ Fluxo: `routes` → `services` → `run_query("arquivo")` → `sql/app/<arquivo>
 | `/equipe-diaria` | rotina_service | Rotina Diária |
 | `/detalhe/lojas` | detalhe_service | painel → lojas |
 | `/detalhe/loja` | detalhe_service | painel → contratos / tentativas |
+| `/du/calendario` | du_calendario | meses, DU de D-1 (ontem), total de DUs |
+| `/du/curva` | du_curva_service | gráfico + KPIs de ritmo (aba Dia Útil) |
+| `/du/ranking` | du_ranking_service | ranking/semáforo por nível |
 
 Query params comuns: `produto`, `gerencia`, `coordenacao`, `supervisao`, `loja`, `data_ini`, `data_fim`, `situacao`, `nivel`, `incluir_sem_movimento`.
+
+Params da aba Dia Útil: `mes_ref` (AAAAMM), `comparar` (AAAAMM dos meses anteriores, separados por vírgula; sem isso vale a janela de 3), `du` (1..DU de ontem / D-1), `metrica` (vlr|qtd|lojas|tentativas).
 
 ---
 
@@ -66,10 +71,11 @@ Query params comuns: `produto`, `gerencia`, `coordenacao`, `supervisao`, `loja`,
 | `periodo.js` | selo de período nos cards/seções |
 | `kpis.js` / `grafico.js` / `tabela.js` / `equipe.js` / `rotina.js` | seções |
 | `detalhe.js` + `detalhe-agrupar.js` + `detalhe-colunas.js` + `detalhe-total.js` | drill-down |
-| `exportar.js` / `rotina-exportar.js` | CSV (`;`, BOM, valores cheios) |
+| `exportar.js` / `rotina-exportar.js` / `du-exportar.js` | CSV (`;`, BOM, valores cheios) |
+| `du.js` + `du-grafico.js` + `du-kpis.js` + `du-ranking.js` | aba Dia Útil (página própria) |
 | `formato.js` / `ordenacao.js` / `api.js` | utilitários |
 
-Layout: topo vermelho (marca + abas produto) + **lateral esquerda sticky** (`partials/filtros.html`) + conteúdo.
+Layout: topo vermelho (marca + abas produto **e Dia Útil**) + **lateral esquerda sticky** (`partials/filtros.html`) + conteúdo. Em `.modo-du` some o período De/Até e o conteúdo geral.
 
 ---
 
@@ -77,10 +83,11 @@ Layout: topo vermelho (marca + abas produto) + **lateral esquerda sticky** (`par
 
 ### Fontes
 
-- Produção: `DEF..TB_CONSIG_AVERBADO_EXP` (`ANO_MES` int **AAAAMMDD**, `INDICADOR`, `SITUACAO_CONTRATO_CONSOLIDADO`, `VLR_CONTRATO`, `CHAVE_LOJA`…)
+- Produção: `DEF..TB_CONSIG_AVERBADO_EXP` (`ANO_MES` int **AAAAMM**, só o mês; `DATA_TRX` date, o dia da operação; `INDICADOR`, `SITUACAO_CONTRATO_CONSOLIDADO`, `VLR_CONTRATO`, `CHAVE_LOJA`…)
 - Tentativas: `TESTE..TENTATIVAS_CONSIGNADO_DIA` (`DATA_ETAPA` datetime, produto, qtds…)
 - Lojas: `DATALAKE..DL_BRADESCO_EXPRESSO` join `MESU..CONS_DISTRIBUICAO_ENTIDADES` via `TRY_CAST(H.COD_AG AS BIGINT) = A.COD_AG_LOJA`
 - Ativas: `DATAWAREHOUSE..TB_INDICADORES_BE` (`PERIODO` AAAAMM, `QTD_ATIVOS > 0`)
+- Calendário DU: `MESU..TB_DIA_UTIL` (`DT_REFERENCIA`, `QT_DIAS_UTEIS_MES`; **0 conta como 1**)
 
 Universo base das consultas: `TIPO_POSTO IN ('Tradicional','Ilha')` + hierarquia.
 
@@ -103,11 +110,13 @@ Universo base das consultas: `TIPO_POSTO IN ('Tradicional','Ilha')` + hierarquia
 
 ### Datas (crítico)
 
-SQL Server em português (dmy). Em tentativas **sempre**:
+SQL Server em português (dmy). Em produção e tentativas **sempre**:
+
+`P.DATA_TRX >= CAST(? AS DATE) AND P.DATA_TRX < DATEADD(DAY, 1, CAST(? AS DATE))`
 
 `T.DATA_ETAPA >= CAST(? AS DATE) AND T.DATA_ETAPA < DATEADD(DAY, 1, CAST(? AS DATE))`
 
-Nunca comparar datetime com string `'YYYY-MM-DD'` crua.
+O filtro diário de produção usa `DATA_TRX` (date), não o inteiro `ANO_MES`. Nunca comparar datetime com string `'YYYY-MM-DD'` crua.
 
 ### SQL (`sql/app` + `run_query`)
 
@@ -119,6 +128,18 @@ Nunca comparar datetime com string `'YYYY-MM-DD'` crua.
 
 Clique em número → resumo por nível (Ger. Gestão → III → Comercial → Loja) → contratos / tentativas por dia. Agrupamento no browser a partir de `/detalhe/lojas`. Rodapé de totais no `tfoot`.
 
+### Aba Dia Útil
+
+Página própria (não um filtro de produto). Compara o mês atual com 3 ou 6 meses anteriores **alinhados pelo DU**, não pelo calendário.
+
+- DU de cada data: `CASE WHEN QT_DIAS_UTEIS_MES = 0 THEN 1 ELSE QT_DIAS_UTEIS_MES END`. Sábado/domingo herdam o número de sexta; a produção do fim de semana soma no mesmo DU.
+- Eixo X = DU 1..N; uma linha por mês (atual em vermelho). Visões **dia** e **acumulado**.
+- Métricas: valor averbado, qtd operações, lojas produtivas (únicas no acumulado), tentativas.
+- “Até DU N” nunca passa do DU de ontem (D-1): a produção é acompanhada com essa visão, o dia corrente ainda não fechou.
+- Ranking por nível com status vs a **média do próprio histórico no mesmo DU**: zerado / abaixo (<-30%) / atenção (-30% a -10%) / padrão / acima (>+10%) / novo (sem histórico).
+- Universo = lojas que produziram (ou tentaram) em algum dos meses comparados — **não** corta por ativas.
+- Classificação pura em `services/du_padrao.py` (testes em `tests/`).
+
 ---
 
 ## Restrições ao editar
@@ -128,7 +149,7 @@ Clique em número → resumo por nível (Ger. Gestão → III → Comercial → 
 3. Não inventar endpoints/SQL paralelos se já existir em `services` + `sql/app`.
 4. Manter arquivos JS/CSS modulares (evitar monólitos > ~300 linhas).
 5. Marca: tokens em `static/css/tokens.css` (vermelho Bradesco); não reintroduzir tema genérico.
-6. Produção de valor = averbado; cobertura = ativas; datas de tentativa = `CAST(? AS DATE)`.
+6. Produção de valor = averbado; cobertura = ativas; produção diária = `DATA_TRX` e tentativas = `DATA_ETAPA`, ambas com `CAST(? AS DATE)`.
 7. Não commitar/push a menos que o usuário peça.
 
 ---

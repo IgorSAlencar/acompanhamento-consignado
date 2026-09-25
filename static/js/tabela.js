@@ -1,9 +1,10 @@
 // Tabela de detalhamento diario (valores = averbado; aguardando/nao averbado a parte)
 import { buscar } from "./api.js";
+import { exportarTabela } from "./tabela-exportar.js";
 import { abrirDetalhe } from "./detalhe.js";
 import { NOMES_PRODUTO, NOMES_SITUACAO } from "./detalhe-colunas.js";
 import { estado, parametros } from "./estado.js";
-import { dataCurta, diaSemana, inteiro, moedaCompacta } from "./formato.js";
+import { blocoValor, dataCurta, diaSemana, inteiro, moedaCompacta, semValor } from "./formato.js";
 import { configurarOrdenacao, ordenar } from "./ordenacao.js";
 
 const ORDEM_COLUNAS = ["INSS", "PUBLICO", "PRIVADO"];
@@ -22,6 +23,7 @@ const EXTRATORES = {
 };
 
 let linhasCache = [];
+let linhasVisiveis = [];
 
 // Atributos que o clique usa para abrir o detalhe por loja
 const alvo = (dia, produto = "", situacao = "") =>
@@ -31,16 +33,19 @@ function celulasProduto(dia, produtos) {
     return ORDEM_COLUNAS.map((nome) => {
         const p = produtos[nome];
         const classe = `col-${nome.toLowerCase()} clicavel`;
+        const tentativas = p.tentativas || p.convertidas
+            ? `${inteiro(p.tentativas)} / ${inteiro(p.convertidas)}`
+            : semValor();
         return `
             <td class="${classe} celula-produto" ${alvo(dia, nome, "AVERBADO")}>
-                <strong>${inteiro(p.qtd)}</strong>
-                <small>${moedaCompacta(p.vlr)}</small>
+                ${blocoValor(p.vlr, p.qtd, moedaCompacta, false, p.lojas)}
             </td>
-            <td class="${classe}" ${alvo(dia, nome)}>${inteiro(p.tentativas)} / ${inteiro(p.convertidas)}</td>`;
+            <td class="${classe}" ${alvo(dia, nome)}>${tentativas}</td>`;
     }).join("");
 }
 
 function renderizar(linhas) {
+    linhasVisiveis = linhas;
     const corpo = document.getElementById("tabela-diaria-corpo");
 
     if (!linhas.length) {
@@ -52,9 +57,9 @@ function renderizar(linhas) {
         <tr>
             <td class="clicavel" ${alvo(l.dia)}>${dataCurta(l.dia)} <small class="dia-semana">${diaSemana(l.dia)}</small></td>
             ${celulasProduto(l.dia, l.produtos)}
-            <td class="valor-total clicavel" ${alvo(l.dia, "", "AVERBADO")}>${moedaCompacta(l.total_vlr)}</td>
-            <td class="clicavel" ${alvo(l.dia, "", "AGUARDANDO AVERBACAO")}>${inteiro(l.qtd_aguardando)} &middot; ${moedaCompacta(l.vlr_aguardando)}</td>
-            <td class="clicavel" ${alvo(l.dia, "", "NAO AVERBADO")}>${inteiro(l.qtd_nao_averbado)} &middot; ${moedaCompacta(l.vlr_nao_averbado)}</td>
+            <td class="celula-produto clicavel" ${alvo(l.dia, "", "AVERBADO")}>${blocoValor(l.total_vlr, l.total_qtd, moedaCompacta, true, l.total_lojas)}</td>
+            <td class="celula-produto clicavel" ${alvo(l.dia, "", "AGUARDANDO AVERBACAO")}>${blocoValor(l.vlr_aguardando, l.qtd_aguardando, moedaCompacta, false, l.lojas_aguardando)}</td>
+            <td class="celula-produto clicavel" ${alvo(l.dia, "", "NAO AVERBADO")}>${blocoValor(l.vlr_nao_averbado, l.qtd_nao_averbado, moedaCompacta, false, l.lojas_nao_averbado)}</td>
         </tr>`).join("");
 }
 
@@ -68,6 +73,15 @@ function tituloDetalhe({ dia, produto, situacao }) {
 export function iniciarOrdenacaoTabela() {
     configurarOrdenacao("tabela-diaria", (chave, crescente) => {
         renderizar(ordenar(linhasCache, EXTRATORES[chave], crescente));
+    });
+
+    document.getElementById("tabela-exportar").addEventListener("click", () => {
+        if (!linhasVisiveis.length) return;
+        exportarTabela({
+            linhas: linhasVisiveis,
+            dataIni: estado.dataIni,
+            dataFim: estado.dataFim,
+        });
     });
 
     document.getElementById("tabela-diaria-corpo").addEventListener("click", (e) => {

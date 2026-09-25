@@ -1,6 +1,6 @@
 // Filtros em cascata: Ger. Gestao > Ger. Comercial III > Ger. Comercial
 import { buscar } from "./api.js";
-import { estado, nivelDerivado } from "./estado.js";
+import { estado, nivelDerivado, nivelDerivadoDu } from "./estado.js";
 
 let opcoes = { gerencias: [], coordenacoes: [], supervisoes: [] };
 
@@ -50,6 +50,7 @@ export async function iniciarFiltros(aoMudar) {
         estado.coordenacao = "";
         estado.supervisao = "";
         estado.nivelEquipe = nivelDerivado();
+        estado.du.nivel = nivelDerivadoDu();
         atualizarCascata();
         aoMudar();
     });
@@ -58,6 +59,7 @@ export async function iniciarFiltros(aoMudar) {
         estado.coordenacao = ev.target.value;
         estado.supervisao = "";
         estado.nivelEquipe = nivelDerivado();
+        estado.du.nivel = nivelDerivadoDu();
         atualizarCascata();
         aoMudar();
     });
@@ -65,6 +67,7 @@ export async function iniciarFiltros(aoMudar) {
     selSupervisao().addEventListener("change", (ev) => {
         estado.supervisao = ev.target.value;
         estado.nivelEquipe = nivelDerivado();
+        estado.du.nivel = nivelDerivadoDu();
         aoMudar();
     });
 

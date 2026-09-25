@@ -12,11 +12,15 @@
         <button type="button" id="btn-tentar-novamente" class="btn-vermelho">Tentar novamente</button>
     </div>
 
-    {% include "partials/kpis.html" %}
-    {% include "partials/grafico.html" %}
-    {% include "partials/tabela.html" %}
-    {% include "partials/equipe.html" %}
-    {% include "partials/rotina.html" %}
+    <div id="modo-geral">
+        {% include "partials/kpis.html" %}
+        {% include "partials/grafico.html" %}
+        {% include "partials/tabela.html" %}
+        {% include "partials/equipe.html" %}
+        {% include "partials/rotina.html" %}
+    </div>
+
+    {% include "partials/du.html" %}
 </main>
 </div>
 

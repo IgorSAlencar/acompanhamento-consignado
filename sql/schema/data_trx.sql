@@ -1,0 +1,7 @@
+-- Estado de DEF.dbo.TB_CONSIG_AVERBADO_EXP depois da migracao:
+-- ANO_MES int AAAAMM (so o mes, ex.: 202609). Nao guarda dia.
+-- DATA_TRX date NOT NULL, dia da operacao. O app filtra so esta coluna.
+-- CK_CONSIG_ANO_MES_AAAAMM recusa ANO_MES com dia (AAAAMMDD) ou mes invalido.
+--
+-- A migracao ja foi aplicada neste servidor: o dia foi copiado de ANO_MES
+-- AAAAMMDD para DATA_TRX e, em seguida, ANO_MES virou ANO_MES / 100.

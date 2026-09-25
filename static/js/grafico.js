@@ -1,8 +1,8 @@
-// Grafico diario com duas visoes: producao averbada ou tentativas
+// Grafico diario: averbado, aguardando, nao averbado ou tentativas
 import { buscar } from "./api.js";
 import { abrirDetalhe } from "./detalhe.js";
 import { parametros } from "./estado.js";
-import { dataCurta, diaMes, inteiro, moedaCompacta } from "./formato.js";
+import { dataCurta, diaMes, diaSemana, inteiro, moedaCompacta } from "./formato.js";
 import { rotulosPlugin } from "./grafico-rotulos.js";
 
 const VERMELHO = "#CC092F";
@@ -10,9 +10,19 @@ const CINZA = "#BCBEC0";
 
 const VISOES = {
     producao: {
-        linha: { rotulo: "Producao averbada (R$)", dados: (d) => d.vlr_producao, formatar: moedaCompacta },
-        barras: { rotulo: "Operacoes averbadas", dados: (d) => d.qtd_operacoes, formatar: inteiro },
+        linha: { rotulo: "Produção averbada (R$)", dados: (d) => d.vlr_producao, formatar: moedaCompacta },
+        barras: { rotulo: "Operações averbadas", dados: (d) => d.qtd_operacoes, formatar: inteiro },
         situacao: "AVERBADO",
+    },
+    aguardando: {
+        linha: { rotulo: "Aguardando averbação (R$)", dados: (d) => d.vlr_aguardando, formatar: moedaCompacta },
+        barras: { rotulo: "Operações aguardando", dados: (d) => d.qtd_aguardando, formatar: inteiro },
+        situacao: "AGUARDANDO AVERBACAO",
+    },
+    nao_averbado: {
+        linha: { rotulo: "Não averbado (R$)", dados: (d) => d.vlr_nao_averbado, formatar: moedaCompacta },
+        barras: { rotulo: "Operações não averbadas", dados: (d) => d.qtd_nao_averbado, formatar: inteiro },
+        situacao: "NAO AVERBADO",
     },
     tentativas: {
         linha: { rotulo: "Tentativas", dados: (d) => d.qtd_tentativas, formatar: inteiro },
@@ -26,6 +36,29 @@ let grafico = null;
 let dadosCache = null;
 let visaoAtual = "producao";
 
+function rotuloDia(iso) {
+    return [diaMes(iso), diaSemana(iso)];
+}
+
+function tamanhoRotulo(chart) {
+    const qtd = Math.max(chart.data.labels.length, 1);
+    const slot = (chart.width - 110) / qtd;
+    if (slot >= 34) return 11;
+    if (slot >= 30) return 10;
+    if (slot >= 26) return 9;
+    return 8;
+}
+
+function ticksEixoX() {
+    return {
+        autoSkip: false,
+        minRotation: 0,
+        maxRotation: 0,
+        padding: 2,
+        font: (ctx) => ({ size: tamanhoRotulo(ctx.chart) }),
+    };
+}
+
 function abrirDia(dia) {
     abrirDetalhe({
         titulo: `Lojas em ${dataCurta(dia)}`,
@@ -36,7 +69,7 @@ function abrirDia(dia) {
 function configuracao(dados, visao) {
     return {
         data: {
-            labels: dados.dias.map(diaMes),
+            labels: dados.dias.map(rotuloDia),
             datasets: [
                 {
                     type: "line",
@@ -93,7 +126,7 @@ function configuracao(dados, visao) {
                 },
             },
             scales: {
-                x: { grid: { display: false }, ticks: { maxTicksLimit: 16 } },
+                x: { grid: { display: false }, ticks: ticksEixoX() },
                 eixoBarras: {
                     display: !visao.eixoUnico,
                     position: "left",

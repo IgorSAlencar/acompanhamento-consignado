@@ -1,6 +1,6 @@
 """Cockpit da equipe por nivel hierarquico, com drill-down, pais e chips de alerta."""
 from repositories.query_runner import run_query
-from services.filtros_comuns import PRODUTOS, filtro_hierarquia, periodo, periodo_int, periodo_mes
+from services.filtros_comuns import PRODUTOS, filtro_hierarquia, periodo, periodo_mes
 
 # Whitelist de niveis -> colunas (nunca vem do usuario)
 NIVEIS = {
@@ -42,7 +42,6 @@ def obter_equipe(args) -> dict:
 
     frag_h, params_h = filtro_hierarquia(args)
     data_ini, data_fim = periodo(args)
-    ini_int, fim_int = periodo_int(data_ini, data_fim)
     mes_ini, mes_fim = periodo_mes(data_ini, data_fim)
     tokens = {
         "FILTROS": frag_h,
@@ -51,8 +50,8 @@ def obter_equipe(args) -> dict:
         "COLS_PAIS": config["cols_pais"],
     }
 
-    cobertura = run_query("equipe_cobertura", params_h + [mes_ini, mes_fim, ini_int, fim_int], tokens)
-    producao = run_query("equipe_producao", params_h + [ini_int, fim_int], tokens)
+    cobertura = run_query("equipe_cobertura", params_h + [mes_ini, mes_fim, data_ini, data_fim], tokens)
+    producao = run_query("equipe_producao", params_h + [data_ini, data_fim], tokens)
     tentativas = run_query("equipe_tentativas", params_h + [data_ini, data_fim], tokens)
 
     linhas: dict[int, dict] = {}
@@ -69,7 +68,7 @@ def obter_equipe(args) -> dict:
             "pct_cobertura": round(100 * qtd_prod / qtd_lojas, 1) if qtd_lojas else 0.0,
             "produtos": {
                 p: {
-                    "vlr": 0.0, "qtd": 0, "vlr_aguardando": 0.0,
+                    "vlr": 0.0, "qtd": 0, "lojas": 0, "vlr_aguardando": 0.0,
                     "tentativas": 0, "convertidas": 0, "pct_conversao": 0.0,
                 }
                 for p in PRODUTOS
@@ -82,6 +81,7 @@ def obter_equipe(args) -> dict:
             produto = linha["produtos"][item["PRODUTO"]]
             produto["vlr"] = float(item["VLR_PRODUCAO"])
             produto["qtd"] = int(item["QTD_OPERACOES"])
+            produto["lojas"] = int(item["QTD_LOJAS"])
             produto["vlr_aguardando"] = float(item["VLR_AGUARDANDO"])
 
     for item in tentativas:

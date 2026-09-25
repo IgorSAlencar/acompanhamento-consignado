@@ -40,5 +40,7 @@
 
     --sombra: 0 1px 3px rgba(0, 0, 0, 0.08);
     --raio: 10px;
+    /* Altura real do header; o JS atualiza ao redimensionar */
+    --topo-altura: 104px;
     --fonte: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
 }

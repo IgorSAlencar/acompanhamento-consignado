@@ -1,0 +1,130 @@
+<section class="secao secao-du" id="secao-du" aria-label="Analise por dia util">
+    <h2 class="secao-titulo">An&aacute;lise por Dia &Uacute;til <span class="periodo-ref" id="du-selo-meses"></span></h2>
+
+    <div class="painel du-controles" role="group" aria-label="Controles da analise">
+        <div class="du-controle">
+            <span class="du-controle-rotulo">Produto</span>
+            <div class="nivel-abas" id="du-produtos">
+                <button type="button" class="nivel-aba ativa" data-produto="">Geral</button>
+                <button type="button" class="nivel-aba" data-produto="INSS">INSS</button>
+                <button type="button" class="nivel-aba" data-produto="PRIVADO">Privado</button>
+                <button type="button" class="nivel-aba" data-produto="PUBLICO">P&uacute;blico</button>
+            </div>
+        </div>
+        <div class="du-controle">
+            <span class="du-controle-rotulo">M&eacute;trica</span>
+            <div class="nivel-abas" id="du-metricas">
+                <button type="button" class="nivel-aba ativa" data-metrica="vlr">Valor averbado</button>
+                <button type="button" class="nivel-aba" data-metrica="qtd">Opera&ccedil;&otilde;es</button>
+                <button type="button" class="nivel-aba" data-metrica="lojas">Lojas produtivas</button>
+                <button type="button" class="nivel-aba" data-metrica="tentativas">Tentativas</button>
+            </div>
+        </div>
+        <div class="du-controle du-comparar">
+            <span class="du-controle-rotulo">Comparar com</span>
+            <button type="button" class="du-comparar-botao" id="du-comparar-botao" aria-expanded="false">3 meses</button>
+            <div class="du-comparar-painel oculto" id="du-comparar-painel">
+                <div class="du-comparar-atalhos">
+                    <button type="button" data-anteriores="1">Mês passado</button>
+                    <button type="button" data-anteriores="2">3 meses</button>
+                    <button type="button" data-anteriores="5">6 meses</button>
+                </div>
+                <p class="du-comparar-dica">O mês atual entra sempre. Marque um ou mais meses.</p>
+                <div id="du-comparar-meses"></div>
+            </div>
+        </div>
+        <label class="du-controle">
+            <span class="du-controle-rotulo">At&eacute; o dia &uacute;til</span>
+            <select id="du-limite"></select>
+        </label>
+    </div>
+
+    <div class="cartoes cartoes-du" id="du-cartoes" aria-label="Ritmo ate o dia util">
+        <article class="cartao destaque">
+            <span class="cartao-rotulo" id="du-kpi-acum-rotulo">Acumulado at&eacute; o DU</span>
+            <strong class="cartao-valor" id="du-kpi-acum">&ndash;</strong>
+            <span class="cartao-detalhe" id="du-kpi-acum-detalhe">&ndash;</span>
+        </article>
+        <article class="cartao">
+            <span class="cartao-rotulo" id="du-kpi-dia-rotulo">No dia &uacute;til</span>
+            <strong class="cartao-valor" id="du-kpi-dia">&ndash;</strong>
+            <span class="cartao-detalhe" id="du-kpi-dia-detalhe">&ndash;</span>
+        </article>
+        <article class="cartao">
+            <span class="cartao-rotulo">
+                Proje&ccedil;&atilde;o de fechamento
+                <span class="du-info-wrap">
+                    <button type="button" class="du-info" aria-describedby="du-kpi-projecao-dica"
+                        aria-label="Como a proje&ccedil;&atilde;o de fechamento &eacute; calculada">?</button>
+                    <span class="du-tooltip" id="du-kpi-projecao-dica" role="tooltip"></span>
+                </span>
+            </span>
+            <strong class="cartao-valor" id="du-kpi-projecao">&ndash;</strong>
+            <span class="cartao-detalhe" id="du-kpi-projecao-detalhe">&ndash;</span>
+        </article>
+        <article class="cartao">
+            <span class="cartao-rotulo">Lojas produtivas</span>
+            <strong class="cartao-valor" id="du-kpi-lojas">&ndash;</strong>
+            <span class="cartao-detalhe" id="du-kpi-lojas-detalhe">&ndash;</span>
+        </article>
+        <article class="cartao">
+            <span class="cartao-rotulo" id="du-kpi-alerta-rotulo">Fora do padr&atilde;o</span>
+            <strong class="cartao-valor" id="du-kpi-alerta">&ndash;</strong>
+            <span class="cartao-detalhe" id="du-kpi-alerta-detalhe">&ndash;</span>
+        </article>
+    </div>
+
+    <div class="painel">
+        <div class="painel-barra">
+            <div class="nivel-abas" id="du-visoes" role="group" aria-label="Visao do grafico">
+                <button type="button" class="nivel-aba ativa" data-visao="acum">Acumulado</button>
+                <button type="button" class="nivel-aba" data-visao="dia">Dia a dia</button>
+            </div>
+            <span class="du-grafico-titulo" id="du-grafico-titulo">Curvas por dia &uacute;til</span>
+            <span class="dica">Clique em um dia &uacute;til para fixar o "at&eacute;" da an&aacute;lise</span>
+        </div>
+        <div class="grafico-area">
+            <canvas id="du-grafico" height="90"></canvas>
+        </div>
+    </div>
+
+    <div class="du-ranking">
+        <div class="equipe-controles">
+            <div class="nivel-abas" id="du-niveis" role="group" aria-label="Nivel do ranking">
+                <button type="button" class="nivel-aba ativa" data-nivel="gerencia">Ger. Gest&atilde;o</button>
+                <button type="button" class="nivel-aba" data-nivel="coordenacao">Ger. Comercial III</button>
+                <button type="button" class="nivel-aba" data-nivel="supervisao">Ger. Comercial</button>
+                <button type="button" class="nivel-aba" data-nivel="loja">Loja</button>
+            </div>
+            <nav class="migalhas" id="du-migalhas" aria-label="Nivel do ranking"></nav>
+            <div class="chips" id="du-chips"></div>
+            <input type="search" id="du-busca" class="du-busca" placeholder="Buscar loja ou nome" aria-label="Buscar na tabela">
+            <button type="button" class="btn-secundario" id="du-exportar"
+                title="Exporta o ranking atual com valores cheios">Exportar CSV</button>
+        </div>
+
+        <p class="du-legenda-media" id="du-legenda-media"></p>
+        <div class="painel painel-tabela">
+            <table class="tabela" id="du-tabela">
+                <thead id="du-tabela-cabecalho"></thead>
+                <tbody id="du-tabela-corpo">
+                    <tr><td colspan="7" class="carregando">Carregando...</td></tr>
+                </tbody>
+                <tfoot id="du-tabela-rodape"></tfoot>
+            </table>
+        </div>
+    </div>
+
+    <div class="painel du-loja-painel oculto" id="du-loja-painel">
+        <div class="du-loja-topo">
+            <strong id="du-loja-titulo"></strong>
+            <div class="du-loja-acoes">
+                <button type="button" class="btn-secundario" id="du-loja-contratos">Ver contratos do m&ecirc;s</button>
+                <button type="button" class="btn-secundario" id="du-loja-fechar">Fechar</button>
+            </div>
+        </div>
+        <div class="grafico-area">
+            <canvas id="du-loja-grafico" height="70"></canvas>
+        </div>
+    </div>
+</section>

@@ -17,9 +17,6 @@ class Config:
     DB_SERVER = os.getenv("DB_SERVER", "DESKTOP-G4V6794")
     DB_DRIVER = os.getenv("DB_DRIVER", "ODBC Driver 17 for SQL Server")
 
-    # Periodo padrao do acompanhamento
-    DATA_INICIO = os.getenv("DATA_INICIO", "2026-07-01")
-
     @classmethod
     def connection_string(cls) -> str:
         return (

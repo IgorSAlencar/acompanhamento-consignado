@@ -1,13 +1,13 @@
 // Colunas das tabelas do painel de detalhe (lojas, contratos e tentativas da loja)
-import { dataCurta, diaSemana, inteiro, moeda, moedaCentavos, percentual } from "./formato.js";
+import { blocoValor, dataCurta, diaSemana, inteiro, moedaCentavos, percentual } from "./formato.js";
 
 export const NOMES_PRODUTO = { INSS: "INSS", PRIVADO: "Privado", PUBLICO: "Público" };
 
 export const NOMES_SITUACAO = {
     "AVERBADO": "Averbado",
-    "AGUARDANDO AVERBACAO": "Ag. averbação",
+    "AGUARDANDO AVERBACAO": "Aguardando averbação",
     "NAO AVERBADO": "Não averbado",
-    "PENDENTE": "Não averbada (ag. averbação + não averbado)",
+    "PENDENTE": "Não averbada (aguardando averbação + não averbado)",
 };
 
 const CLASSE_SITUACAO = {
@@ -18,9 +18,7 @@ const CLASSE_SITUACAO = {
 
 const zeroAlerta = (valor) => (valor ? inteiro(valor) : '<span class="alerta-texto">0</span>');
 
-const valorComQtd = (vlr, qtd, destaque = false) => `
-    <strong class="${destaque ? "valor-total" : ""}">${moeda(vlr)}</strong>
-    <small>${inteiro(qtd)} oper.</small>`;
+const valorComQtd = (vlr, qtd, destaque = false) => blocoValor(vlr, qtd, undefined, destaque);
 
 const colunaHierarquia = (chave, rotulo) => ({
     chave, rotulo, valor: (l) => l[chave] || "", classe: "texto-esquerda celula-hierarquia", hierarquia: true,
@@ -44,7 +42,9 @@ export const COLUNAS_LOJAS = [
             html: (l) => valorComQtd(l.vlr_averbado, l.qtd_averbado, true),
         },
         {
-            chave: "aguardando", rotulo: "Ag. Averbação", valor: (l) => l.vlr_aguardando,
+            chave: "aguardando", rotulo: "Aguardando Averbação",
+            rotuloHtml: "Aguardando<br>Averbação",
+            valor: (l) => l.vlr_aguardando,
             html: (l) => valorComQtd(l.vlr_aguardando, l.qtd_aguardando),
         },
         {

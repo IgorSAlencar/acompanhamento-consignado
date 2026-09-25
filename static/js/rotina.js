@@ -100,7 +100,7 @@ function celula(linha, dia, metrica, maximo) {
     const fds = fimDeSemana(dia);
     const titulo = `${dataCurta(dia)} | ${inteiro(c.tent)} tentativas, ${inteiro(c.conv)} convertidas | ` +
         `${inteiro(c.lojas)}/${inteiro(linha.qtd_lojas)} lojas tentaram | ${moeda(c.vlr)} averbado | ` +
-        `${moeda(c.vlr_ag)} ag. averbação | ${moeda(c.vlr_nao)} não averbado`;
+        `${moeda(c.vlr_ag)} aguardando averbação | ${moeda(c.vlr_nao)} não averbado`;
 
     if (c.tent === 0 && !metrica.temProducao?.(c)) {
         return `<td class="celula-dia clicavel ${fds ? "fds-vazio" : "zero-util"}" data-dia="${dia}" title="${titulo}">${fds ? "&middot;" : "0"}</td>`;

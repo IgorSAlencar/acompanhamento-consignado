@@ -3,6 +3,9 @@ from flask import Blueprint, jsonify, request
 
 from db.connection import DatabaseError
 from services.detalhe_service import obter_loja, obter_lojas
+from services.du_calendario import obter_calendario
+from services.du_curva_service import obter_curva
+from services.du_ranking_service import obter_ranking
 from services.equipe_service import obter_equipe
 from services.filtros_service import listar_filtros
 from services.resumo_service import obter_resumo
@@ -52,6 +55,21 @@ def equipe():
 @api_bp.get("/equipe-diaria")
 def equipe_diaria():
     return jsonify(obter_rotina(request.args))
+
+
+@api_bp.get("/du/calendario")
+def du_calendario():
+    return jsonify(obter_calendario(request.args))
+
+
+@api_bp.get("/du/curva")
+def du_curva():
+    return jsonify(obter_curva(request.args))
+
+
+@api_bp.get("/du/ranking")
+def du_ranking():
+    return jsonify(obter_ranking(request.args))
 
 
 @api_bp.get("/detalhe/lojas")

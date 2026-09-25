@@ -2,13 +2,11 @@
 from repositories.query_runner import run_query
 from services.equipe_service import NIVEIS
 from services.filtros_comuns import (
-    dia_int_para_iso,
     dias_do_periodo,
     filtro_hierarquia,
     filtro_produto_producao,
     filtro_produto_tentativas,
     periodo,
-    periodo_int,
     periodo_mes,
 )
 
@@ -28,7 +26,6 @@ def obter_rotina(args) -> dict:
 
     frag_h, params_h = filtro_hierarquia(args)
     data_ini, data_fim = periodo(args)
-    ini_int, fim_int = periodo_int(data_ini, data_fim)
     mes_ini, mes_fim = periodo_mes(data_ini, data_fim)
     frag_pp, params_pp = filtro_produto_producao(args)
     frag_pt, params_pt = filtro_produto_tentativas(args)
@@ -39,7 +36,7 @@ def obter_rotina(args) -> dict:
         "COLS_PAIS": config["cols_pais"],
     }
 
-    entidades = run_query("equipe_cobertura", params_h + [mes_ini, mes_fim, ini_int, fim_int], tokens)
+    entidades = run_query("equipe_cobertura", params_h + [mes_ini, mes_fim, data_ini, data_fim], tokens)
     tentativas = run_query(
         "rotina_tentativas",
         params_h + [data_ini, data_fim] + params_pt,
@@ -47,7 +44,7 @@ def obter_rotina(args) -> dict:
     )
     producao = run_query(
         "rotina_producao",
-        params_h + [ini_int, fim_int] + params_pp,
+        params_h + [data_ini, data_fim] + params_pp,
         {**tokens, "PRODUTO": frag_pp},
     )
 
@@ -75,7 +72,7 @@ def obter_rotina(args) -> dict:
 
     for item in producao:
         linha = linhas.get(item["CHAVE"])
-        dia = dia_int_para_iso(item["DIA_INT"])
+        dia = item["DIA"].isoformat()
         if linha and dia in linha["dias"]:
             celula = linha["dias"][dia]
             celula["qtd"] = int(item["QTD_AVERBADO"])

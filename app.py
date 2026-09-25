@@ -1,5 +1,11 @@
 """Ponto de entrada do site de Acompanhamento de Consignado - Bradesco Expresso."""
+import mimetypes
+
 from flask import Flask
+
+# Windows pode mapear .js/.css como text/plain; o navegador bloqueia modulo ES.
+mimetypes.add_type("application/javascript", ".js")
+mimetypes.add_type("text/css", ".css")
 
 from config import Config
 from routes.api import api_bp

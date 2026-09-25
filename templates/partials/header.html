@@ -1,7 +1,7 @@
 <header class="topo">
     <div class="topo-marca">
-        <span class="marca">Bradesco</span>
-        <span class="topo-titulo">Acompanhamento Consignado &middot; Bradesco Expresso</span>
+        <img class="marca" src="{{ url_for('static', filename='img/bradesco-branco.png') }}" alt="Bradesco">
+        <span class="topo-titulo">Cockpit &middot; Bradesco Expresso</span>
     </div>
 
     <nav class="abas" id="abas-produto" aria-label="Produto">
@@ -9,5 +9,6 @@
         <button type="button" class="aba" data-produto="INSS">INSS</button>
         <button type="button" class="aba" data-produto="PRIVADO">Privado</button>
         <button type="button" class="aba" data-produto="PUBLICO">P&uacute;blico</button>
+        <button type="button" class="aba" data-modo="du" title="An&aacute;lise comparativa por dia &uacute;til">Dia &Uacute;til</button>
     </nav>
 </header>
