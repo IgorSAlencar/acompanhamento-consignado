@@ -1,6 +1,6 @@
 """Rotina diaria da equipe: tentativas e producao de cada gerente, dia a dia."""
 from repositories.query_runner import run_query
-from services.equipe_service import NIVEIS
+from services.equipe_service import NIVEIS, pais_visiveis
 from services.filtros_comuns import (
     dias_do_periodo,
     filtro_hierarquia,
@@ -85,7 +85,7 @@ def obter_rotina(args) -> dict:
     return {
         "nivel": nivel,
         "rotulo": config["rotulo"],
-        "pais": config["pais"],
+        "pais": pais_visiveis(config["pais"], args),
         "dias": dias,
         "linhas": sorted(linhas.values(), key=lambda l: l["descricao"]),
     }

@@ -76,12 +76,7 @@ export function iniciarOrdenacaoTabela() {
     });
 
     document.getElementById("tabela-exportar").addEventListener("click", () => {
-        if (!linhasVisiveis.length) return;
-        exportarTabela({
-            linhas: linhasVisiveis,
-            dataIni: estado.dataIni,
-            dataFim: estado.dataFim,
-        });
+        exportarTabela(document.getElementById("tabela-exportar"));
     });
 
     document.getElementById("tabela-diaria-corpo").addEventListener("click", (e) => {

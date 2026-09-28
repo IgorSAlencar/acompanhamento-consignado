@@ -20,7 +20,7 @@ body.modal-aberto { overflow: hidden; }
 
 .modal-caixa {
     position: relative;
-    width: min(1280px, 95vw);
+    width: min(1480px, 96vw);
     height: 88vh;
     background: var(--fundo);
     border-radius: var(--raio);
@@ -71,6 +71,12 @@ body.modal-aberto { overflow: hidden; }
     color: var(--branco);
     font-weight: 700;
     border-top: 2px solid var(--vermelho);
+}
+
+.modal-tabela tfoot td.col-inss,
+.modal-tabela tfoot td.col-privado,
+.modal-tabela tfoot td.col-publico {
+    background: var(--vermelho-escuro);
 }
 
 #detalhe-rodape td * { color: var(--branco); }

@@ -34,6 +34,22 @@ NIVEIS = {
 }
 
 
+def pais_visiveis(pais: list[str], args) -> list[str]:
+    """Colunas de hierarquia que ainda variam entre as linhas.
+
+    O filtro lateral ja fixa o nivel escolhido e os pais acima dele
+    (uma coordenacao pertence a uma unica gerencia). Repetir esses
+    nomes em toda linha so polui a tabela.
+    """
+    if args.get("loja") or args.get("supervisao") or args.get("coordenacao"):
+        fixados = {"gerencia", "coordenacao"}
+    elif args.get("gerencia"):
+        fixados = {"gerencia"}
+    else:
+        return list(pais)
+    return [nivel for nivel in pais if nivel not in fixados]
+
+
 def obter_equipe(args) -> dict:
     nivel = args.get("nivel") or "gerencia"
     if nivel not in NIVEIS:
@@ -108,7 +124,7 @@ def obter_equipe(args) -> dict:
         "nivel": nivel,
         "rotulo": config["rotulo"],
         "proximo_nivel": config["proximo"],
-        "pais": config["pais"],
+        "pais": pais_visiveis(config["pais"], args),
         "total_entidades": len(resultado),
         "sem_tentativa": chips,
         "linhas": resultado,

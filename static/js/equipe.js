@@ -205,13 +205,7 @@ export function iniciarControlesEquipe(recarregarTudo) {
     document.getElementById("tabela-equipe-corpo").addEventListener("click", aoClicarCorpo);
     document.getElementById("equipe-chips").addEventListener("click", aoClicarChip);
     document.getElementById("equipe-exportar").addEventListener("click", () => {
-        if (!dadosCache) return;
-        exportarEquipe({
-            dados: dadosCache,
-            linhas: linhasAtuais(),
-            dataIni: estado.dataIni,
-            dataFim: estado.dataFim,
-        });
+        exportarEquipe(document.getElementById("equipe-exportar"));
     });
 
     configurarOrdenacao("tabela-equipe", (chave, crescente) => {

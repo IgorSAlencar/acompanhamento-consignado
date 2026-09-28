@@ -1,6 +1,7 @@
 """Drill-down ate o maior detalhe: numero -> lojas -> contratos / tentativas da loja."""
 from repositories.query_runner import run_query
 from services.filtros_comuns import (
+    PRODUTOS,
     filtro_hierarquia,
     filtro_produto_producao,
     filtro_produto_tentativas,
@@ -8,9 +9,19 @@ from services.filtros_comuns import (
     periodo,
     periodo_mes,
     produto_do_indicador,
+    produto_selecionado,
+    situacao_selecionada,
 )
 
-_SOMENTE_COM_MOVIMENTO = "WHERE P.CHAVE_LOJA IS NOT NULL OR T.CHAVE_LOJA IS NOT NULL"
+_SOMENTE_COM_MOVIMENTO = "WHERE P.QTD_AVERBADO > 0"
+
+
+def _filtro_movimento(args) -> str:
+    if args.get("foco") == "tentativas":
+        return "WHERE T.QTD_TENTATIVAS > 0"
+    if situacao_selecionada(args):
+        return "WHERE P.QTD_AVERBADO + P.QTD_AGUARDANDO + P.QTD_NAO_AVERBADO > 0"
+    return _SOMENTE_COM_MOVIMENTO
 
 
 def _formatar_cpf(cpf: str) -> str:
@@ -35,7 +46,7 @@ def obter_lojas(args) -> list[dict]:
             "PRODUTO_P": frag_pp,
             "SITUACAO": frag_s,
             "PRODUTO_T": frag_pt,
-            "SOMENTE_COM_MOVIMENTO": "" if incluir_todas else _SOMENTE_COM_MOVIMENTO,
+            "SOMENTE_COM_MOVIMENTO": "" if incluir_todas else _filtro_movimento(args),
         },
     )
 
@@ -62,7 +73,40 @@ def obter_lojas(args) -> list[dict]:
             "qtd_convertidas": conv,
             "pct_conversao": round(100 * conv / tent, 1) if tent else 0.0,
         })
+    if args.get("por_produto") == "1" and not produto_selecionado(args):
+        _anexar_produtos(resultado, frag_h, params_h, data_ini, data_fim)
     return resultado
+
+
+def _produto_vazio() -> dict:
+    return {
+        produto: {"qtd_tentativas": 0, "qtd_convertidas": 0, "pct_conversao": 0.0}
+        for produto in PRODUTOS
+    }
+
+
+def _anexar_produtos(lojas, frag_h, params_h, data_ini, data_fim) -> None:
+    """Quebra tentativas e convertidas de cada loja por produto (visao Geral)."""
+    linhas = run_query(
+        "detalhe_tentativas_produto",
+        params_h + [data_ini, data_fim],
+        {"FILTROS": frag_h},
+    )
+    por_loja = {int(loja["chave_loja"]): _produto_vazio() for loja in lojas}
+    for linha in linhas:
+        produtos = por_loja.get(int(linha["CHAVE_LOJA"]))
+        produto = linha["PRODUTO"]
+        if not produtos or produto not in produtos:
+            continue
+        tent = int(linha["QTD_TENTATIVAS"])
+        conv = int(linha["QTD_CONVERTIDAS"])
+        produtos[produto] = {
+            "qtd_tentativas": tent,
+            "qtd_convertidas": conv,
+            "pct_conversao": round(100 * conv / tent, 1) if tent else 0.0,
+        }
+    for loja in lojas:
+        loja["produtos"] = por_loja[int(loja["chave_loja"])]
 
 
 def obter_loja(args) -> dict:

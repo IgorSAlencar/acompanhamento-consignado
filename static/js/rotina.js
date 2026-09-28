@@ -17,29 +17,23 @@ const vlrPendente = (c) => c.vlr_ag + c.vlr_nao;
 const VERMELHO = "204, 9, 47";
 const AMBAR = "196, 122, 0";
 
-// nomeCsv/casasCsv: rotulo e casas decimais das colunas de dia na exportacao
 const METRICAS = {
     tentativas: {
         valor: (c) => c.tent, texto: (c) => inteiro(c.tent), situacao: "", cor: VERMELHO,
-        nomeCsv: "Tentativas",
     },
     lojas: {
         valor: pctLojas, texto: (c, l) => `${Math.round(pctLojas(c, l))}%`, situacao: "", cor: VERMELHO,
-        nomeCsv: "% lojas que tentaram", casasCsv: 1,
     },
     conversao: {
         valor: pctConv, texto: (c) => (c.tent ? `${Math.round(pctConv(c))}%` : "0"), situacao: "", cor: VERMELHO,
-        nomeCsv: "Conversão (%)", casasCsv: 1,
     },
     producao: {
         valor: (c) => c.vlr, texto: (c) => (c.vlr ? compacto(c.vlr) : "0"),
         situacao: "AVERBADO", cor: VERMELHO, temProducao: (c) => c.vlr > 0,
-        nomeCsv: "Averbado (R$)", casasCsv: 2,
     },
     pendente: {
         valor: vlrPendente, texto: (c) => (vlrPendente(c) ? compacto(vlrPendente(c)) : "0"),
         situacao: "PENDENTE", cor: AMBAR, temProducao: (c) => vlrPendente(c) > 0,
-        nomeCsv: "Não averbado (R$)", casasCsv: 2,
     },
 };
 
@@ -116,16 +110,10 @@ function linhasOrdenadas() {
 }
 
 function exportar() {
-    if (!dados) return;
-    const metrica = METRICAS[opcoes.metrica];
     exportarRotina({
-        dados,
-        linhas: linhasOrdenadas(),
-        metrica,
-        chaveMetrica: opcoes.metrica,
-        nomeMetrica: metrica.nomeCsv,
-        dataIni: dados.dias[0],
-        dataFim: dados.dias[dados.dias.length - 1],
+        botao: $("rotina-exportar"),
+        dataIni: inicioJanela(),
+        metrica: opcoes.metrica,
     });
 }
 
@@ -160,13 +148,15 @@ function aoClicar(evento) {
     if (!tr || !td) return;
 
     const dia = td.dataset.dia;
+    const metrica = METRICAS[opcoes.metrica];
     abrirDetalhe({
         titulo: `Detalhe · ${tr.dataset.descricao}${dia ? ` · ${dataCurta(dia)}` : ""}`,
+        foco: metrica.situacao ? "" : "tentativas",
         filtros: {
             [dados.nivel]: tr.dataset.chave,
             data_ini: dia || inicioJanela(),
             data_fim: dia || estado.dataFim,
-            situacao: METRICAS[opcoes.metrica].situacao,
+            situacao: metrica.situacao,
             incluir_sem_movimento: true,
         },
     });

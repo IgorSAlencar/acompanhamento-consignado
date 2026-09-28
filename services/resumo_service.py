@@ -44,11 +44,14 @@ def obter_resumo(args) -> dict:
         # Producao considera apenas contratos AVERBADOS
         "vlr_averbado": float(producao["VLR_AVERBADO"]),
         "qtd_averbado": int(producao["QTD_AVERBADO"] or 0),
+        "qtd_lojas_averbado": int(producao["QTD_LOJAS_AVERBADO"] or 0),
         # Mostrados a parte
         "vlr_aguardando": float(producao["VLR_AGUARDANDO"]),
         "qtd_aguardando": int(producao["QTD_AGUARDANDO"] or 0),
+        "qtd_lojas_aguardando": int(producao["QTD_LOJAS_AGUARDANDO"] or 0),
         "vlr_nao_averbado": float(producao["VLR_NAO_AVERBADO"]),
         "qtd_nao_averbado": int(producao["QTD_NAO_AVERBADO"] or 0),
+        "qtd_lojas_nao_averbado": int(producao["QTD_LOJAS_NAO_AVERBADO"] or 0),
         "qtd_tentativas": qtd_tent,
         "qtd_convertidas": qtd_conv,
         "pct_conversao": round(100 * qtd_conv / qtd_tent, 1) if qtd_tent else 0.0,

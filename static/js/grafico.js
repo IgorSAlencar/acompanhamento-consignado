@@ -60,8 +60,10 @@ function ticksEixoX() {
 }
 
 function abrirDia(dia) {
+    const tentativas = visaoAtual === "tentativas";
     abrirDetalhe({
-        titulo: `Lojas em ${dataCurta(dia)}`,
+        titulo: tentativas ? `Tentativas em ${dataCurta(dia)}` : `Lojas em ${dataCurta(dia)}`,
+        foco: tentativas ? "tentativas" : "",
         filtros: { data_ini: dia, data_fim: dia, situacao: VISOES[visaoAtual].situacao },
     });
 }
@@ -101,7 +103,7 @@ function configuracao(dados, visao) {
         plugins: [rotulosPlugin],
         options: {
             responsive: true,
-            maintainAspectRatio: true,
+            maintainAspectRatio: false,
             layout: { padding: { top: 30 } },
             interaction: { mode: "index", intersect: false },
             onClick: (evento) => {

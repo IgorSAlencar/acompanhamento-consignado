@@ -1,18 +1,18 @@
 // Painel de detalhe: qualquer numero -> resumo por nivel hierarquico -> lojas -> contratos / tentativas
 import { buscar } from "./api.js";
 import {
-    NIVEIS, agrupar, colunasGrupo, filtrarPorTrilha, indiceNivel, nivelInicial,
+    NIVEIS, agrupar, colunasGrupo, colunasLojas, filtrarPorTrilha, indiceNivel, nivelInicial, temMovimento,
 } from "./detalhe-agrupar.js";
-import { COLUNAS_CONTRATOS, COLUNAS_LOJAS, COLUNAS_TENTATIVAS, NOMES_PRODUTO, NOMES_SITUACAO } from "./detalhe-colunas.js";
+import { COLUNAS_CONTRATOS, COLUNAS_TENTATIVAS, NOMES_PRODUTO, NOMES_SITUACAO, htmlCabecalho } from "./detalhe-colunas.js";
 import { parametros } from "./estado.js";
-import { exportarCsv } from "./exportar.js";
+import { baixarXlsx } from "./exportar-xlsx.js";
 import { descricaoDe } from "./filtros.js";
 import { htmlLinhaTotal } from "./detalhe-total.js";
 import { dataCurta, inteiro } from "./formato.js";
 import { configurarOrdenacao, ordenar } from "./ordenacao.js";
 
 const $ = (id) => document.getElementById(id);
-let contexto = null;      // { titulo, filtros }
+let contexto = null;      // { titulo, filtros, foco }
 let lojasBase = [];       // todas as lojas do contexto (com e sem movimento)
 let trilha = [];          // passos de drill-down: [{ nivel, valor }]
 let agrupamento = "gerencia";
@@ -23,7 +23,13 @@ let ordem = null;
 let busca = "";
 let incluirSemMovimento = false;
 
-const temMovimento = (l) => l.qtd_tentativas > 0 || l.qtd_averbado + l.qtd_aguardando + l.qtd_nao_averbado > 0;
+function comMovimento(l) {
+    return temMovimento(l, contexto?.foco, contexto?.filtros.situacao);
+}
+
+function porProduto() {
+    return contexto?.foco === "tentativas" && !contexto.filtros.produto;
+}
 
 function linhasVisiveis() {
     let linhas = visao.linhas;
@@ -64,8 +70,7 @@ function migalhas() {
 }
 
 function renderizarCabecalho() {
-    $("detalhe-cabecalho").innerHTML = `<tr>${visao.colunas
-        .map((c) => `<th data-chave="${c.chave}"${c.rotuloHtml ? ' class="th-quebra"' : ""}>${c.rotuloHtml || c.rotulo}</th>`).join("")}</tr>`;
+    $("detalhe-cabecalho").innerHTML = htmlCabecalho(visao.colunas);
 }
 
 function renderizarTabela() {
@@ -97,36 +102,39 @@ function abasAgrupamento() {
 
 function barraResumo() {
     const ehLoja = agrupamento === "loja";
-    const dica = ehLoja ? "Clique em uma loja para ver contratos e tentativas"
+    const dicaLoja = contexto.foco === "tentativas"
+        ? "Clique em uma loja para ver as tentativas por dia"
+        : "Clique em uma loja para ver contratos e tentativas";
+    const dica = ehLoja ? dicaLoja
         : `Clique em uma linha para abrir o ${NIVEIS[indiceNivel(agrupamento) + 1].rotulo}`;
+    const rotuloIncluir = contexto.foco === "tentativas" ? "Incluir lojas sem tentativa"
+        : contexto.filtros.situacao && contexto.filtros.situacao !== "AVERBADO"
+            ? "Incluir lojas sem contratos nesta situação" : "Incluir lojas sem consignado averbado";
     $("detalhe-barra").innerHTML = `
         ${abasAgrupamento()}
         <input type="search" id="detalhe-busca" class="campo-busca" placeholder="Buscar...">
-        ${ehLoja ? `<label class="caixa"><input type="checkbox" id="detalhe-sem-movimento" ${incluirSemMovimento ? "checked" : ""}> Incluir lojas sem movimento</label>` : ""}
+        ${ehLoja ? `<label class="caixa"><input type="checkbox" id="detalhe-sem-movimento" ${incluirSemMovimento ? "checked" : ""}> ${rotuloIncluir}</label>` : ""}
         <span class="dica">${dica}</span>
-        <button type="button" class="btn-secundario" id="detalhe-exportar">Exportar CSV</button>`;
+        <button type="button" class="btn-secundario" id="detalhe-exportar">Exportar Excel</button>`;
     $("detalhe-barra").querySelectorAll("[data-agrupar]").forEach((b) =>
         b.addEventListener("click", () => { agrupamento = b.dataset.agrupar; mostrarResumo(); }));
     $("detalhe-sem-movimento")?.addEventListener("change", (e) => { incluirSemMovimento = e.target.checked; mostrarResumo(); });
 }
 
 function barraLoja() {
-    const abas = [
-        ["contratos", `Contratos (${inteiro(dadosLoja.contratos.length)})`],
-        ["tentativas", `Tentativas por dia (${inteiro(dadosLoja.tentativas.length)})`],
-    ];
+    const abas = contexto.foco === "tentativas"
+        ? [["tentativas", `Tentativas por dia (${inteiro(dadosLoja.tentativas.length)})`]]
+        : [
+            ["contratos", `Contratos (${inteiro(dadosLoja.contratos.length)})`],
+            ["tentativas", `Tentativas por dia (${inteiro(dadosLoja.tentativas.length)})`],
+        ];
     $("detalhe-barra").innerHTML = `
         <div class="nivel-abas">${abas.map(([tipo, rotulo]) =>
             `<button type="button" class="nivel-aba ${visao.tipo === tipo ? "ativa" : ""}" data-aba="${tipo}">${rotulo}</button>`).join("")}</div>
         <input type="search" id="detalhe-busca" class="campo-busca" placeholder="Buscar...">
-        <button type="button" class="btn-secundario" id="detalhe-exportar">Exportar CSV</button>`;
+        <button type="button" class="btn-secundario" id="detalhe-exportar">Exportar Excel</button>`;
     $("detalhe-barra").querySelectorAll("[data-aba]").forEach((b) =>
         b.addEventListener("click", () => mostrarAbaLoja(b.dataset.aba)));
-}
-
-function nomeExportacao() {
-    if (loja) return `${visao.tipo}_loja_${loja.chave_loja}`;
-    return visao.tipo === "grupos" ? `resumo_${agrupamento}` : "lojas";
 }
 
 function definirVisao(tipo, colunas, linhas) {
@@ -137,7 +145,11 @@ function definirVisao(tipo, colunas, linhas) {
     (loja ? barraLoja : barraResumo)();
     $("detalhe-busca").addEventListener("input", (e) => { busca = e.target.value; renderizarTabela(); });
     $("detalhe-exportar").addEventListener("click", () =>
-        exportarCsv(`${nomeExportacao()}.csv`, visao.colunas, linhasVisiveis()));
+        baixarXlsx("/api/exportar/detalhe", {
+            ...contexto.filtros,
+            incluir_sem_movimento: incluirSemMovimento ? "1" : "",
+            por_produto: porProduto() ? "1" : "",
+        }, $("detalhe-exportar")));
     migalhas();
     renderizarTabela();
 }
@@ -147,9 +159,11 @@ function mostrarResumo() {
     $("detalhe-titulo").textContent = contexto.titulo;
     const lojas = filtrarPorTrilha(lojasBase, trilha);
     if (agrupamento === "loja") {
-        definirVisao("lojas", COLUNAS_LOJAS, incluirSemMovimento ? lojas : lojas.filter(temMovimento));
+        definirVisao("lojas", colunasLojas(contexto.filtros, trilha), incluirSemMovimento ? lojas : lojas.filter(comMovimento));
     } else {
-        definirVisao("grupos", colunasGrupo(agrupamento), agrupar(lojas, agrupamento));
+        let linhas = agrupar(lojas, agrupamento, contexto.foco, contexto.filtros.situacao);
+        if (contexto.foco === "tentativas") linhas = linhas.filter((g) => g.qtd_tentativas > 0);
+        definirVisao("grupos", colunasGrupo(agrupamento, contexto.filtros, trilha), linhas);
     }
 }
 
@@ -190,7 +204,8 @@ function abrirLoja(dadosDaLoja) {
     migalhas();
     return executar(async () => {
         dadosLoja = await buscar("/api/detalhe/loja", { ...contexto.filtros, loja: loja.chave_loja });
-        mostrarAbaLoja(dadosLoja.contratos.length || contexto.filtros.situacao ? "contratos" : "tentativas");
+        const abrirContratos = contexto.foco !== "tentativas" && (dadosLoja.contratos.length || contexto.filtros.situacao);
+        mostrarAbaLoja(abrirContratos ? "contratos" : "tentativas");
     });
 }
 
@@ -218,8 +233,8 @@ export function iniciarDetalhe() {
 }
 
 // Ponto de entrada usado por graficos, tabelas e cards
-export function abrirDetalhe({ titulo, filtros = {} }) {
-    contexto = { titulo, filtros: { ...parametros(), ...filtros } };
+export function abrirDetalhe({ titulo, filtros = {}, foco = "" }) {
+    contexto = { titulo, foco, filtros: { ...parametros(), ...filtros, foco } };
     delete contexto.filtros.incluir_sem_movimento;
     incluirSemMovimento = Boolean(filtros.incluir_sem_movimento);
     trilha = [];
@@ -228,7 +243,11 @@ export function abrirDetalhe({ titulo, filtros = {} }) {
     $("detalhe").classList.remove("oculto");
     document.body.classList.add("modal-aberto");
     executar(async () => {
-        const dados = await buscar("/api/detalhe/lojas", { ...contexto.filtros, incluir_sem_movimento: "1" });
+        const dados = await buscar("/api/detalhe/lojas", {
+            ...contexto.filtros,
+            incluir_sem_movimento: "1",
+            por_produto: porProduto() ? "1" : "",
+        });
         lojasBase = dados.linhas;
         mostrarResumo();
     });

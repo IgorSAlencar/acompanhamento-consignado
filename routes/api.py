@@ -1,5 +1,7 @@
 """Endpoints JSON consumidos pelo front-end."""
-from flask import Blueprint, jsonify, request
+from io import BytesIO
+
+from flask import Blueprint, jsonify, request, send_file
 
 from db.connection import DatabaseError
 from services.detalhe_service import obter_loja, obter_lojas
@@ -7,6 +9,13 @@ from services.du_calendario import obter_calendario
 from services.du_curva_service import obter_curva
 from services.du_ranking_service import obter_ranking
 from services.equipe_service import obter_equipe
+from services.exportar_service import (
+    exportar_detalhe,
+    exportar_du,
+    exportar_equipe,
+    exportar_rotina,
+    exportar_tabela,
+)
 from services.filtros_service import listar_filtros
 from services.resumo_service import obter_resumo
 from services.rotina_service import obter_rotina
@@ -80,3 +89,37 @@ def detalhe_lojas():
 @api_bp.get("/detalhe/loja")
 def detalhe_loja():
     return jsonify(obter_loja(request.args))
+
+
+def _xlsx(nome: str, conteudo: bytes):
+    return send_file(
+        BytesIO(conteudo),
+        as_attachment=True,
+        download_name=nome,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+
+
+@api_bp.get("/exportar/equipe")
+def baixar_equipe():
+    return _xlsx(*exportar_equipe(request.args))
+
+
+@api_bp.get("/exportar/rotina")
+def baixar_rotina():
+    return _xlsx(*exportar_rotina(request.args))
+
+
+@api_bp.get("/exportar/tabela")
+def baixar_tabela():
+    return _xlsx(*exportar_tabela(request.args))
+
+
+@api_bp.get("/exportar/du")
+def baixar_du():
+    return _xlsx(*exportar_du(request.args))
+
+
+@api_bp.get("/exportar/detalhe")
+def baixar_detalhe():
+    return _xlsx(*exportar_detalhe(request.args))

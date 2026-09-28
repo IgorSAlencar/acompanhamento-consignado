@@ -385,8 +385,7 @@ export function iniciarRanking({ aoNavegar, aoTrocarNivel }) {
     corpo().addEventListener("click", aoClicarCorpo);
 
     document.getElementById("du-exportar").addEventListener("click", () => {
-        if (!dados) return;
-        exportarRankingDu({ dados, linhas: linhasAtuais() });
+        exportarRankingDu(document.getElementById("du-exportar"));
     });
 
     configurarOrdenacao("du-tabela", (chave, crescente) => {

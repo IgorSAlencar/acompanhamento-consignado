@@ -13,18 +13,22 @@ body {
     padding: 0 20px;
 }
 
-/* ---------------- Topo (vermelho protagonista, marca em negativo) -------- */
+/* ---------------- Topo (marca vermelha e navegacao branca) -------- */
 .topo {
     position: sticky;
     top: 0;
     z-index: 30;
     background: var(--vermelho);
     color: var(--branco);
-    padding: 14px 24px 0;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+/* Mesma largura e recuo da .pagina, para logo e abas
+   começarem na borda esquerda da caixa de filtros. */
+.topo-conteudo {
+    max-width: 1520px;
+    margin: 0 auto;
+    padding: 0 20px;
 }
 
 .topo-marca {
@@ -32,46 +36,63 @@ body {
     align-items: center;
     gap: 16px;
     flex-wrap: wrap;
+    padding: 10px 0;
 }
 
 .marca {
-    height: 34px;
+    height: 28px;
     width: auto;
     display: block;
 }
 
 .topo-titulo {
-    font-size: 14px;
+    font-size: 13px;
     opacity: 0.92;
+}
+
+.topo-navegacao {
+    background: var(--branco);
+    border-bottom: 1px solid var(--borda);
 }
 
 .abas {
     display: flex;
     gap: 4px;
+    min-height: 44px;
+    overflow-x: auto;
 }
 
 .aba {
     border: none;
-    background: transparent;
-    color: var(--branco);
+    border-bottom: 3px solid transparent;
+    background: var(--branco);
+    color: var(--texto-suave);
     font: inherit;
+    font-size: 14px;
     font-weight: 600;
     padding: 10px 22px;
     cursor: pointer;
-    border-radius: var(--raio) var(--raio) 0 0;
-    opacity: 0.85;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
-.aba:hover { opacity: 1; }
+.aba:hover { color: var(--vermelho); }
+
+.aba:focus-visible {
+    outline: 2px solid var(--vermelho);
+    outline-offset: -4px;
+}
 
 .aba.ativa {
-    background: var(--fundo);
     color: var(--vermelho);
-    opacity: 1;
+    border-bottom-color: var(--vermelho);
 }
 
 /* ---------------- Secoes ---------------- */
 .secao { margin: 26px 0; }
+
+/* Detalhamento diario e Equipe so na aba Geral (repetem o recorte por produto) */
+body.modo-produto .so-geral { display: none; }
 
 .secao-titulo {
     font-size: 17px;
@@ -162,7 +183,22 @@ body {
     z-index: 1;
 }
 
-.grafico-area { position: relative; }
+/* Altura fixa no container, canvas fora do fluxo.
+   Se a altura dependesse do canvas, o ResizeObserver do Chart.js
+   encolhe o grafico em loop em alguns navegadores (arredondamento de pixel). */
+.grafico-area {
+    position: relative;
+    width: 100%;
+    height: 280px;
+    overflow: hidden;
+}
+
+.grafico-area > canvas {
+    position: absolute;
+    inset: 0;
+    display: block;
+    max-width: none;
+}
 
 .rodape {
     text-align: center;

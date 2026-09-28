@@ -8,12 +8,31 @@ const IDENTIFICADORES = new Set([
     "dia", "produto", "situacao", "contrato", "nsu", "cpf",
 ]);
 
+const PRODUTOS = ["INSS", "PRIVADO", "PUBLICO"];
+
 function somar(linhas) {
     const total = {};
-    linhas.forEach((l) => Object.entries(l).forEach(([campo, valor]) => {
-        if (typeof valor === "number" && !IDENTIFICADORES.has(campo)) total[campo] = (total[campo] || 0) + valor;
-    }));
+    const produtos = Object.fromEntries(PRODUTOS.map((p) => [p, { qtd_tentativas: 0, qtd_convertidas: 0, pct_conversao: 0 }]));
+    let temProdutos = false;
+    linhas.forEach((l) => {
+        Object.entries(l).forEach(([campo, valor]) => {
+            if (typeof valor === "number" && !IDENTIFICADORES.has(campo)) total[campo] = (total[campo] || 0) + valor;
+        });
+        if (!l.produtos) return;
+        temProdutos = true;
+        PRODUTOS.forEach((p) => {
+            produtos[p].qtd_tentativas += l.produtos[p]?.qtd_tentativas || 0;
+            produtos[p].qtd_convertidas += l.produtos[p]?.qtd_convertidas || 0;
+        });
+    });
     total.pct_conversao = total.qtd_tentativas ? (100 * total.qtd_convertidas) / total.qtd_tentativas : 0;
+    if (temProdutos) {
+        PRODUTOS.forEach((p) => {
+            const item = produtos[p];
+            item.pct_conversao = item.qtd_tentativas ? (100 * item.qtd_convertidas) / item.qtd_tentativas : 0;
+        });
+        total.produtos = produtos;
+    }
     return total;
 }
 
@@ -36,7 +55,7 @@ export function htmlLinhaTotal(visao, linhas, agrupamento) {
                 <small>${rotuloContagem(visao.tipo, agrupamento, linhas.length)}</small></td>`;
         }
         if (IDENTIFICADORES.has(coluna.chave)) return "<td></td>";
-        return `<td class="celula-produto">${coluna.html ? coluna.html(total) : inteiro(coluna.valor(total))}</td>`;
+        return `<td class="${coluna.classe || ""} celula-produto">${coluna.html ? coluna.html(total) : inteiro(coluna.valor(total))}</td>`;
     });
     return `<tr>${celulas.join("")}</tr>`;
 }

@@ -31,17 +31,17 @@ async function carregarTudo() {
 
     atualizarPeriodoGeral();
     kpisCarregando();
-    tabelaCarregando();
-    equipeCarregando();
     rotinaCarregando();
 
-    const resultados = await Promise.allSettled([
-        carregarKpis(),
-        carregarGrafico(),
-        carregarTabela(),
-        carregarEquipe(carregarTudo),
-        carregarRotina(),
-    ]);
+    const visaoGeral = !estado.produto;
+    const tarefas = [carregarKpis(), carregarGrafico(), carregarRotina()];
+    if (visaoGeral) {
+        tabelaCarregando();
+        equipeCarregando();
+        tarefas.push(carregarTabela(), carregarEquipe(carregarTudo));
+    }
+
+    const resultados = await Promise.allSettled(tarefas);
 
     const falha = resultados.find((r) => r.status === "rejected");
     if (falha) mostrarErro(falha.reason.message);
@@ -60,6 +60,7 @@ function iniciarAbas() {
                 estado.produto = aba.dataset.produto;
             }
             document.body.classList.toggle("modo-du", estado.modo === "du");
+            document.body.classList.toggle("modo-produto", estado.modo === "geral" && Boolean(estado.produto));
             carregarTudo();
         });
     });

@@ -3,6 +3,8 @@ import { blocoValor, dataCurta, diaSemana, inteiro, moedaCentavos, percentual } 
 
 export const NOMES_PRODUTO = { INSS: "INSS", PRIVADO: "Privado", PUBLICO: "Público" };
 
+export const PRODUTOS = ["INSS", "PRIVADO", "PUBLICO"];
+
 export const NOMES_SITUACAO = {
     "AVERBADO": "Averbado",
     "AGUARDANDO AVERBACAO": "Aguardando averbação",
@@ -53,6 +55,66 @@ export const COLUNAS_LOJAS = [
         },
     ].map((c) => ({ ...c, metrica: true })),
 ];
+
+const CHAVES_TENTATIVAS = ["tentativas", "convertidas", "conversao"];
+
+function produtoDaLinha(linha, codigo) {
+    return linha.produtos?.[codigo] || { qtd_tentativas: 0, qtd_convertidas: 0, pct_conversao: 0 };
+}
+
+function colunasDoProduto(codigo) {
+    const nome = NOMES_PRODUTO[codigo];
+    const classe = `col-${codigo.toLowerCase()}`;
+    return [
+        {
+            chave: `${codigo}_tentativas`, rotulo: "Tentativas", grupo: nome, classe,
+            valor: (l) => produtoDaLinha(l, codigo).qtd_tentativas,
+            html: (l) => zeroAlerta(produtoDaLinha(l, codigo).qtd_tentativas),
+        },
+        {
+            chave: `${codigo}_convertidas`, rotulo: "Convertidas", grupo: nome, classe,
+            valor: (l) => produtoDaLinha(l, codigo).qtd_convertidas,
+            html: (l) => inteiro(produtoDaLinha(l, codigo).qtd_convertidas),
+        },
+        {
+            chave: `${codigo}_conversao`, rotulo: "Conversão", grupo: nome, classe,
+            valor: (l) => produtoDaLinha(l, codigo).pct_conversao,
+            html: (l) => percentual(produtoDaLinha(l, codigo).pct_conversao),
+        },
+    ];
+}
+
+export function colunasMetricas(filtros = {}) {
+    if (filtros.foco === "tentativas" && !filtros.produto) return PRODUTOS.flatMap(colunasDoProduto);
+    return COLUNAS_LOJAS.filter((c) => c.metrica && (filtros.foco !== "tentativas" || CHAVES_TENTATIVAS.includes(c.chave)));
+}
+
+function htmlTh(coluna, extra = "") {
+    const classes = [coluna.classe, coluna.rotuloHtml ? "th-quebra" : ""].filter(Boolean).join(" ");
+    return `<th data-chave="${coluna.chave}"${extra}${classes ? ` class="${classes}"` : ""}>${coluna.rotuloHtml || coluna.rotulo}</th>`;
+}
+
+export function htmlCabecalho(colunas) {
+    if (!colunas.some((c) => c.grupo)) return `<tr>${colunas.map((c) => htmlTh(c)).join("")}</tr>`;
+
+    const grupos = [];
+    const metricas = [];
+    let i = 0;
+    while (i < colunas.length) {
+        const coluna = colunas[i];
+        if (!coluna.grupo) {
+            grupos.push(htmlTh(coluna, ' rowspan="2"'));
+            i += 1;
+            continue;
+        }
+        let fim = i + 1;
+        while (fim < colunas.length && colunas[fim].grupo === coluna.grupo) fim += 1;
+        grupos.push(`<th colspan="${fim - i}" class="${coluna.classe || ""}">${coluna.grupo}</th>`);
+        for (let j = i; j < fim; j += 1) metricas.push(htmlTh(colunas[j]));
+        i = fim;
+    }
+    return `<tr>${grupos.join("")}</tr><tr>${metricas.join("")}</tr>`;
+}
 
 export const COLUNAS_CONTRATOS = [
     { chave: "dia", rotulo: "Data", valor: (c) => c.dia, html: (c) => dataCurta(c.dia), csv: (c) => dataCurta(c.dia) },

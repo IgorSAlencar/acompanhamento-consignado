@@ -94,7 +94,7 @@ export function desenharCurvas(canvasId, curva, { metrica, visao, aoClicarDu }) 
         plugins: [rotulosPlugin, marcaDuPlugin],
         options: {
             responsive: true,
-            maintainAspectRatio: true,
+            maintainAspectRatio: false,
             layout: { padding: { top: 30 } },
             interaction: { mode: "index", intersect: false },
             onClick: aoClicarDu

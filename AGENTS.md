@@ -105,6 +105,7 @@ Universo base das consultas: `TIPO_POSTO IN ('Tradicional','Ilha')` + hierarquia
 
 ### Cobertura vs produção
 
+- **Lojas c/ movimento** depende do assunto da tela: na produção, lojas com **AVERBADO**; em tentativas, lojas que tentaram; em aguardando/não averbado/pendente, lojas com contratos na situação correspondente. Sempre contar lojas únicas no dia/período e produto filtrados; em Geral, unir produtos sem repetir lojas. Aplicar a mesma regra no resumo, lista e exportação, incluindo inativas com movimento no contexto.
 - **Cobertura** (KPI + coluna Equipe + `% lojas que tentaram` da rotina): denominador = lojas **ativas no período** (`TB_INDICADORES_BE`, `PERIODO BETWEEN` meses de `data_ini`/`data_fim`)
 - **Produção e tentativas**: **não** cortar por ativas (loja inativa ainda conta no total se teve movimento)
 
