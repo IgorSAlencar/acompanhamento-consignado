@@ -6,12 +6,12 @@ import { compacto, dataCurta, diaMes, diaSemana, fimDeSemana, inteiro, moeda, pe
 import { configurarOrdenacao, ordenar } from "./ordenacao.js";
 import { definirPeriodo } from "./periodo.js";
 import { exportarRotina } from "./rotina-exportar.js";
+import { linhaCarregandoTabela } from "./tabela-carregamento.js";
 
 const $ = (id) => document.getElementById(id);
 
 const pctLojas = (c, l) => (l.qtd_lojas ? (100 * c.lojas) / l.qtd_lojas : 0);
 const pctConv = (c) => (c.tent ? (100 * c.conv) / c.tent : 0);
-const vlrPendente = (c) => c.vlr_ag + c.vlr_nao;
 
 // cor: RGB base da escala de intensidade de cada metrica
 const VERMELHO = "204, 9, 47";
@@ -29,11 +29,15 @@ const METRICAS = {
     },
     producao: {
         valor: (c) => c.vlr, texto: (c) => (c.vlr ? compacto(c.vlr) : "0"),
-        situacao: "AVERBADO", cor: VERMELHO, temProducao: (c) => c.vlr > 0,
+        situacao: "AVERBADO", cor: VERMELHO,
     },
-    pendente: {
-        valor: vlrPendente, texto: (c) => (vlrPendente(c) ? compacto(vlrPendente(c)) : "0"),
-        situacao: "PENDENTE", cor: AMBAR, temProducao: (c) => vlrPendente(c) > 0,
+    aguardando: {
+        valor: (c) => c.vlr_ag, texto: (c) => (c.vlr_ag ? compacto(c.vlr_ag) : "0"),
+        situacao: "AGUARDANDO AVERBACAO", cor: AMBAR,
+    },
+    cancelada: {
+        valor: (c) => c.vlr_nao, texto: (c) => (c.vlr_nao ? compacto(c.vlr_nao) : "0"),
+        situacao: "NAO AVERBADO", cor: AMBAR,
     },
 };
 
@@ -47,10 +51,11 @@ const EXTRATORES = {
     tentativas: (l) => l.resumo.tent,
     conversao: (l) => l.resumo.conversao,
     producao: (l) => l.resumo.vlr,
-    pendente: (l) => l.resumo.pendente,
+    aguardando: (l) => l.resumo.aguardando,
+    cancelada: (l) => l.resumo.cancelada,
 };
 
-const opcoes = { metrica: "tentativas", nivel: "supervisao", janela: 15 };
+const opcoes = { metrica: "producao", nivel: "supervisao", janela: 15 };
 let dados = null;
 let ordem = null;
 
@@ -70,7 +75,8 @@ function calcularResumo(linha, dias) {
         tent,
         conversao: tent ? (100 * conv) / tent : 0,
         vlr: celulas.reduce((t, c) => t + c.vlr, 0),
-        pendente: celulas.reduce((t, c) => t + vlrPendente(c), 0),
+        aguardando: celulas.reduce((t, c) => t + c.vlr_ag, 0),
+        cancelada: celulas.reduce((t, c) => t + c.vlr_nao, 0),
         semTentativa: dias.filter((d) => !fimDeSemana(d) && linha.dias[d].tent === 0).length,
     };
 }
@@ -84,7 +90,8 @@ function renderizarCabecalho() {
         <th data-chave="tentativas">Tentativas</th>
         <th data-chave="conversao">Conv.</th>
         <th data-chave="producao">Averbado</th>
-        <th data-chave="pendente" title="Aguardando averba&ccedil;&atilde;o + n&atilde;o averbado">N&atilde;o<br>averbado</th>
+        <th data-chave="aguardando">Aguardando<br>averba&ccedil;&atilde;o</th>
+        <th data-chave="cancelada">Cancelado</th>
         ${dados.dias.map((d) => `<th class="dia ${fimDeSemana(d) ? "fds" : ""}">${diaMes(d)}<small>${diaSemana(d)}</small></th>`).join("")}
     </tr>`;
 }
@@ -94,9 +101,9 @@ function celula(linha, dia, metrica, maximo) {
     const fds = fimDeSemana(dia);
     const titulo = `${dataCurta(dia)} | ${inteiro(c.tent)} tentativas, ${inteiro(c.conv)} convertidas | ` +
         `${inteiro(c.lojas)}/${inteiro(linha.qtd_lojas)} lojas tentaram | ${moeda(c.vlr)} averbado | ` +
-        `${moeda(c.vlr_ag)} aguardando averbação | ${moeda(c.vlr_nao)} não averbado`;
+        `${moeda(c.vlr_ag)} aguardando averbação | ${moeda(c.vlr_nao)} cancelado`;
 
-    if (c.tent === 0 && !metrica.temProducao?.(c)) {
+    if (metrica.valor(c, linha) === 0) {
         return `<td class="celula-dia clicavel ${fds ? "fds-vazio" : "zero-util"}" data-dia="${dia}" title="${titulo}">${fds ? "&middot;" : "0"}</td>`;
     }
     const razao = maximo ? metrica.valor(c, linha) / maximo : 0;
@@ -136,7 +143,8 @@ function renderizarCorpo() {
             <td>${inteiro(l.resumo.tent)}</td>
             <td>${percentual(l.resumo.conversao)}</td>
             <td>${compacto(l.resumo.vlr)}</td>
-            <td class="valor-pendente">${compacto(l.resumo.pendente)}</td>
+            <td class="valor-pendente">${compacto(l.resumo.aguardando)}</td>
+            <td class="valor-pendente">${compacto(l.resumo.cancelada)}</td>
             ${dados.dias.map((d) => celula(l, d, metrica, maximo)).join("")}
         </tr>`;
     }).join("");
@@ -163,7 +171,7 @@ function aoClicar(evento) {
 }
 
 export function rotinaCarregando() {
-    $("rotina-corpo").innerHTML = '<tr><td class="carregando">Carregando...</td></tr>';
+    $("rotina-corpo").innerHTML = linhaCarregandoTabela();
 }
 
 export async function carregarRotina() {
@@ -191,7 +199,7 @@ export function iniciarRotina() {
     botoes.forEach((botao) => botao.addEventListener("click", () => {
         botoes.forEach((b) => b.classList.toggle("ativa", b === botao));
         opcoes.metrica = botao.dataset.metrica;
-        $("tabela-rotina").closest("section").classList.toggle("metrica-pendente", opcoes.metrica === "pendente");
+        $("tabela-rotina").closest("section").classList.toggle("metrica-pendente", METRICAS[opcoes.metrica].cor === AMBAR);
         if (dados) renderizarCorpo();
     }));
 

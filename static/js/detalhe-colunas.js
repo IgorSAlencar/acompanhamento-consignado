@@ -8,8 +8,8 @@ export const PRODUTOS = ["INSS", "PRIVADO", "PUBLICO"];
 export const NOMES_SITUACAO = {
     "AVERBADO": "Averbado",
     "AGUARDANDO AVERBACAO": "Aguardando averbação",
-    "NAO AVERBADO": "Não averbado",
-    "PENDENTE": "Não averbada (aguardando averbação + não averbado)",
+    "NAO AVERBADO": "Cancelado",
+    "PENDENTE": "Cancelado (aguardando averbação + cancelado)",
 };
 
 const CLASSE_SITUACAO = {
@@ -19,6 +19,7 @@ const CLASSE_SITUACAO = {
 };
 
 const zeroAlerta = (valor) => (valor ? inteiro(valor) : '<span class="alerta-texto">0</span>');
+const identificadorInteiro = (valor) => String(valor ?? "").replace(/\.0+$/, "");
 
 const valorComQtd = (vlr, qtd, destaque = false) => blocoValor(vlr, qtd, undefined, destaque);
 
@@ -50,7 +51,7 @@ export const COLUNAS_LOJAS = [
             html: (l) => valorComQtd(l.vlr_aguardando, l.qtd_aguardando),
         },
         {
-            chave: "nao_averbado", rotulo: "Não Averbado", valor: (l) => l.vlr_nao_averbado,
+            chave: "nao_averbado", rotulo: "Cancelado", valor: (l) => l.vlr_nao_averbado,
             html: (l) => valorComQtd(l.vlr_nao_averbado, l.qtd_nao_averbado),
         },
     ].map((c) => ({ ...c, metrica: true })),
@@ -121,10 +122,11 @@ export const COLUNAS_CONTRATOS = [
     { chave: "produto", rotulo: "Produto", valor: (c) => c.produto, html: (c) => NOMES_PRODUTO[c.produto] || c.produto },
     {
         chave: "situacao", rotulo: "Situação", valor: (c) => c.situacao,
+        csv: (c) => NOMES_SITUACAO[c.situacao] || c.situacao,
         html: (c) => `<span class="selo ${CLASSE_SITUACAO[c.situacao] || ""}">${NOMES_SITUACAO[c.situacao] || c.situacao}</span>`,
     },
-    { chave: "contrato", rotulo: "Contrato", valor: (c) => c.contrato },
-    { chave: "nsu", rotulo: "NSU", valor: (c) => c.nsu },
+    { chave: "contrato", rotulo: "Contrato", valor: (c) => c.contrato, html: (c) => identificadorInteiro(c.contrato) },
+    { chave: "nsu", rotulo: "NSU", valor: (c) => c.nsu, html: (c) => identificadorInteiro(c.nsu) },
     { chave: "cpf", rotulo: "CPF", valor: (c) => c.cpf },
     { chave: "valor", rotulo: "Valor", valor: (c) => c.valor, html: (c) => `<strong>${moedaCentavos(c.valor)}</strong>` },
 ];

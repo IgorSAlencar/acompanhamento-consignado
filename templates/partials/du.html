@@ -89,6 +89,7 @@
     </div>
 
     <div class="du-ranking">
+        <h3 class="secao-titulo">Ranking por Dia &Uacute;til</h3>
         <div class="equipe-controles">
             <div class="nivel-abas" id="du-niveis" role="group" aria-label="Nivel do ranking">
                 <button type="button" class="nivel-aba ativa" data-nivel="gerencia">Ger. Gest&atilde;o</button>
@@ -108,7 +109,7 @@
             <table class="tabela" id="du-tabela">
                 <thead id="du-tabela-cabecalho"></thead>
                 <tbody id="du-tabela-corpo">
-                    <tr><td colspan="7" class="carregando">Carregando...</td></tr>
+                    {% include "partials/tabela-carregamento.html" %}
                 </tbody>
                 <tfoot id="du-tabela-rodape"></tfoot>
             </table>

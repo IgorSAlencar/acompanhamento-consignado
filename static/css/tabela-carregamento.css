@@ -1,0 +1,31 @@
+/* O indicador ocupa a largura visivel, mesmo ao recarregar tabelas largas. */
+.painel-tabela:has(.tabela-carregamento) { overflow: hidden; }
+.painel-tabela:has(.tabela-carregamento) .tabela { table-layout: fixed; width: 100%; }
+.painel-tabela:has(.tabela-carregamento) :is(thead, tfoot) { display: none; }
+.painel-tabela .carregando { height: 220px; vertical-align: middle; white-space: normal; }
+.tabela-ampliada .painel-tabela:has(.tabela-carregamento) .tabela { height: 100%; }
+.tabela-carregamento {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 24px 16px;
+    text-align: center;
+    color: var(--texto-suave);
+}
+.tabela-carregamento strong { font-size: 14px; font-weight: 600; color: var(--texto); }
+.tabela-carregamento-nota { font-size: 12px; line-height: 1.5; }
+.tabela-carregamento-icone {
+    width: 30px;
+    height: 30px;
+    margin-bottom: 4px;
+    border: 3px solid var(--tinta-inss-forte);
+    border-top-color: var(--vermelho);
+    border-radius: 50%;
+    animation: tabela-carregamento-girar .9s linear infinite;
+}
+@keyframes tabela-carregamento-girar { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+    .tabela-carregamento-icone { animation: none; }
+}

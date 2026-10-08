@@ -7,6 +7,7 @@ import { estado, parametros } from "./estado.js";
 import { descricaoDe, selecionar } from "./filtros.js";
 import { inteiro, moedaCompacta, percentual, semValor, textoLojas } from "./formato.js";
 import { configurarOrdenacao, ordenar } from "./ordenacao.js";
+import { linhaCarregandoTabela } from "./tabela-carregamento.js";
 
 const ROTULOS = {
     gerencia: "Ger. Gest&atilde;o",
@@ -216,7 +217,7 @@ export function iniciarControlesEquipe(recarregarTudo) {
 
 export function equipeCarregando() {
     document.getElementById("tabela-equipe-corpo").innerHTML =
-        '<tr><td colspan="7" class="carregando">Carregando...</td></tr>';
+        linhaCarregandoTabela();
 }
 
 export async function carregarEquipe(recarregarTudo) {

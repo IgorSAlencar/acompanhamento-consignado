@@ -1,11 +1,10 @@
 """Folhas comuns do drill-down: grupos, lojas, contratos e tentativas."""
 from repositories.query_runner import run_query
+from services.contratos_service import parametros_consulta_contratos
 from services.detalhe_service import obter_lojas
 from services.filtros_comuns import (
     filtro_hierarquia,
-    filtro_produto_producao,
     filtro_produto_tentativas,
-    filtro_situacao,
     periodo,
     produto_do_indicador,
 )
@@ -23,7 +22,7 @@ NOMES_PRODUTO = {"INSS": "INSS", "PRIVADO": "Privado", "PUBLICO": "Público"}
 NOMES_SITUACAO = {
     "AVERBADO": "Averbado",
     "AGUARDANDO AVERBACAO": "Aguardando averbação",
-    "NAO AVERBADO": "Não averbado",
+    "NAO AVERBADO": "Cancelado",
 }
 
 CAMPOS_SOMA = (
@@ -123,16 +122,8 @@ def formatar_cpf(cpf: str) -> str:
 
 
 def listar_contratos(args) -> list[dict]:
-    frag_h, params_h = filtro_hierarquia(args)
-    data_ini, data_fim = periodo(args)
-    frag_p, params_p = filtro_produto_producao(args)
-    frag_s, params_s = filtro_situacao(args)
-    linhas = run_query(
-        "exportar_contratos",
-        params_h + [data_ini, data_fim] + params_p + params_s,
-        {"FILTROS": frag_h, "PRODUTO": frag_p, "SITUACAO": frag_s},
-    )
-    return [_contrato(linha) for linha in linhas]
+    params, tokens = parametros_consulta_contratos(args)
+    return [_contrato(linha) for linha in run_query("exportar_contratos", params, tokens)]
 
 
 def listar_tentativas(args) -> list[dict]:
@@ -153,8 +144,13 @@ def adicionar_arvore(wb, args, grupos: bool = True, lojas: bool = True) -> None:
     situacao = args.get("situacao") or ""
     por_produto = str(args.get("por_produto") or "") == "1"
     if grupos or lojas:
-        todas = obter_lojas({**dict(args), "incluir_sem_movimento": "1"})
         incluir_todas = str(args.get("incluir_sem_movimento") or "") in ("1", "true", "True")
+        # Grupos exportam tambem a coluna Lojas ativas: precisam das ativas sem
+        # movimento para preservar esse denominador. Nunca do cadastro historico.
+        todas = obter_lojas({
+            **dict(args), "qualquer_movimento": "1",
+            "incluir_sem_movimento": "1" if incluir_todas or grupos else "",
+        })
         visiveis = todas if incluir_todas else [loja for loja in todas if _com_movimento(loja, foco, situacao)]
         if grupos:
             for nivel in niveis_a_partir(args, ("gerencia", "coordenacao", "supervisao")):
@@ -226,8 +222,8 @@ COLUNAS_METRICAS_GRUPO = [
     Coluna("Averbado (QTD)", lambda l: l["qtd_averbado"], "inteiro"),
     Coluna("Aguardando averbação (R$)", lambda l: l["vlr_aguardando"], "reais"),
     Coluna("Aguardando averbação (QTD)", lambda l: l["qtd_aguardando"], "inteiro"),
-    Coluna("Não averbado (R$)", lambda l: l["vlr_nao_averbado"], "reais"),
-    Coluna("Não averbado (QTD)", lambda l: l["qtd_nao_averbado"], "inteiro"),
+    Coluna("Cancelado (R$)", lambda l: l["vlr_nao_averbado"], "reais"),
+    Coluna("Cancelado (QTD)", lambda l: l["qtd_nao_averbado"], "inteiro"),
 ]
 
 COLUNAS_METRICAS_LOJA = [
@@ -238,8 +234,8 @@ COLUNAS_METRICAS_LOJA = [
     Coluna("Averbado (QTD)", lambda l: l["qtd_averbado"], "inteiro"),
     Coluna("Aguardando averbação (R$)", lambda l: l["vlr_aguardando"], "reais"),
     Coluna("Aguardando averbação (QTD)", lambda l: l["qtd_aguardando"], "inteiro"),
-    Coluna("Não averbado (R$)", lambda l: l["vlr_nao_averbado"], "reais"),
-    Coluna("Não averbado (QTD)", lambda l: l["qtd_nao_averbado"], "inteiro"),
+    Coluna("Cancelado (R$)", lambda l: l["vlr_nao_averbado"], "reais"),
+    Coluna("Cancelado (QTD)", lambda l: l["qtd_nao_averbado"], "inteiro"),
 ]
 
 COLUNAS_CONTRATOS = [
@@ -295,7 +291,7 @@ def _contrato(linha: dict) -> dict:
 
 
 def _tentativa(linha: dict) -> dict:
-    tent = int(linha["QTD_TENTATIVAS_TOTAL"])
+    tent = int(linha["QTD_CLIENTES"])
     conv = int(linha["QTD_CONVERTIDOS"])
     produto = linha["PRODUTO"]
     return {

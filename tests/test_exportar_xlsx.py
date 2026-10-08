@@ -10,7 +10,7 @@ from unittest.mock import patch
 from openpyxl import load_workbook
 
 from services.exportar_arvore import agrupar, nivel_inicial, niveis_a_partir, tem_movimento
-from services.exportar_service import exportar_detalhe, exportar_du, exportar_equipe, exportar_tabela
+from services.exportar_service import exportar_detalhe, exportar_du, exportar_equipe, exportar_rotina, exportar_tabela
 from services.xlsx_planilha import Coluna, VERMELHO, bytes_workbook, escrever_planilha, novo_workbook
 
 
@@ -144,6 +144,35 @@ class TestAgrupar(TestCase):
 
 
 class TestComposicao(TestCase):
+    @patch("services.exportar_service.adicionar_arvore")
+    @patch("services.exportar_service.obter_rotina")
+    def test_rotina_separa_situacoes_e_inicia_com_averbado(self, mock_rotina, _arvore):
+        dia = "2026-09-25"
+        mock_rotina.return_value = {
+            "nivel": "supervisao", "rotulo": "Ger. Comercial", "dias": [dia],
+            "linhas": [{
+                "descricao": "Comercial Sul", "qtd_lojas": 2,
+                "dias": {dia: {"tent": 0, "conv": 0, "lojas": 0,
+                               "vlr": 100, "vlr_ag": 30, "vlr_nao": 5}},
+            }],
+        }
+        for metrica, valor, rotulo in [
+            (None, 100, "Averbado (R$)"),
+            ("aguardando", 30, "Aguardando averbação (R$)"),
+            ("cancelada", 5, "Cancelado (R$)"),
+        ]:
+            with self.subTest(metrica=metrica):
+                args = {"coordenacao": "2", "data_ini": dia, "data_fim": dia}
+                if metrica:
+                    args["metrica"] = metrica
+                _nome, conteudo = exportar_rotina(args)
+                ws = _abrir(conteudo)["Ger. Comercial"]
+                valores = {cab.value: cel.value for cab, cel in zip(ws[1], ws[2])}
+                self.assertEqual(valores["Averbado (R$)"], 100)
+                self.assertEqual(valores["Aguardando averbação (R$)"], 30)
+                self.assertEqual(valores["Cancelado (R$)"], 5)
+                self.assertEqual(valores[f"{rotulo} 25/09/2026 (sex)"], valor)
+
     @patch("services.exportar_arvore.run_query", return_value=[])
     @patch("services.exportar_arvore.obter_lojas", return_value=[_loja()])
     @patch("services.exportar_service.obter_equipe")

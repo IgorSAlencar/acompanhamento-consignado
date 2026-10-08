@@ -55,9 +55,11 @@ class TestLojasNoRecorte(TestCase):
         self.assertNotIn("ATIVA", tokens["SOMENTE_COM_MOVIMENTO"])
 
     @patch("services.detalhe_service.run_query", return_value=[])
-    def test_incluir_sem_movimento_preserva_universo_completo(self, query):
+    def test_incluir_sem_movimento_limita_a_ativas_ou_movimento(self, query):
         obter_lojas({"situacao": "AVERBADO", "incluir_sem_movimento": "1"})
-        self.assertEqual(query.call_args.args[2]["SOMENTE_COM_MOVIMENTO"], "")
+        filtro = query.call_args.args[2]["SOMENTE_COM_MOVIMENTO"]
+        self.assertIn("L.ATIVA = 1 OR", filtro)
+        self.assertIn("ISNULL(T.QTD_TENTATIVAS, 0) > 0", filtro)
 
     @patch("services.detalhe_service.run_query", return_value=[])
     def test_lista_geral_sem_situacao_usa_lojas_averbadas(self, query):

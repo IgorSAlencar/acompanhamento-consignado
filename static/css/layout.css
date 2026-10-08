@@ -207,6 +207,20 @@ body.modo-produto .so-geral { display: none; }
     padding: 24px 0 32px;
 }
 
+.grafico-status:not([hidden]) {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.88);
+    color: var(--texto-suave);
+    font-size: 14px;
+}
+
 @media (max-width: 760px) {
     .topo-titulo { font-size: 12px; }
 }

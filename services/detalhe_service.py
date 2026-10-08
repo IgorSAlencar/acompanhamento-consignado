@@ -14,9 +14,18 @@ from services.filtros_comuns import (
 )
 
 _SOMENTE_COM_MOVIMENTO = "WHERE P.QTD_AVERBADO > 0"
+_QUALQUER_MOVIMENTO = (
+    "ISNULL(P.QTD_AVERBADO, 0) + ISNULL(P.QTD_AGUARDANDO, 0) + "
+    "ISNULL(P.QTD_NAO_AVERBADO, 0) > 0 OR ISNULL(T.QTD_TENTATIVAS, 0) > 0"
+)
 
 
 def _filtro_movimento(args) -> str:
+    # Mantem todas as metricas dos grupos, inclusive movimento de lojas inativas.
+    if args.get("incluir_sem_movimento") == "1":
+        return f"WHERE L.ATIVA = 1 OR {_QUALQUER_MOVIMENTO}"
+    if args.get("qualquer_movimento") == "1":
+        return f"WHERE {_QUALQUER_MOVIMENTO}"
     if args.get("foco") == "tentativas":
         return "WHERE T.QTD_TENTATIVAS > 0"
     if situacao_selecionada(args):
@@ -36,17 +45,17 @@ def obter_lojas(args) -> list[dict]:
     frag_pp, params_pp = filtro_produto_producao(args)
     frag_pt, params_pt = filtro_produto_tentativas(args)
     frag_s, params_s = filtro_situacao(args)
-    incluir_todas = args.get("incluir_sem_movimento") == "1"
 
     linhas = run_query(
         "detalhe_lojas",
-        [mes_ini, mes_fim] + params_h + [data_ini, data_fim] + params_pp + params_s + [data_ini, data_fim] + params_pt,
+        [mes_ini, mes_fim] + [data_ini, data_fim] + params_pp + params_s + [data_ini, data_fim] + params_pt + params_h,
         {
             "FILTROS": frag_h,
             "PRODUTO_P": frag_pp,
             "SITUACAO": frag_s,
             "PRODUTO_T": frag_pt,
-            "SOMENTE_COM_MOVIMENTO": "" if incluir_todas else _filtro_movimento(args),
+            "INCLUIR_ATIVAS": "UNION SELECT CHAVE_LOJA FROM ATIVAS" if args.get("incluir_sem_movimento") == "1" else "",
+            "SOMENTE_COM_MOVIMENTO": _filtro_movimento(args),
         },
     )
 
@@ -145,7 +154,7 @@ def obter_loja(args) -> dict:
             {
                 "dia": t["DATA_ETAPA"].isoformat(),
                 "produto": t["PRODUTO"],
-                "tentativas": int(t["QTD_TENTATIVAS_TOTAL"]),
+                "tentativas": int(t["QTD_CLIENTES"]),
                 "clientes": int(t["QTD_CLIENTES"]),
                 "convertidos": int(t["QTD_CONVERTIDOS"]),
                 "abandonadas": int(t["QTD_ABANDONADAS"]),

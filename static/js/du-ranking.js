@@ -8,6 +8,7 @@ import { estado, parametrosDu } from "./estado.js";
 import { descricaoDe, selecionar } from "./filtros.js";
 import { inteiro, mesAno, semValor } from "./formato.js";
 import { configurarOrdenacao, ordenar } from "./ordenacao.js";
+import { linhaCarregandoTabela } from "./tabela-carregamento.js";
 
 const NOMES_STATUS = {
     zerado: "Zerado",
@@ -324,7 +325,8 @@ function aoClicarCorpo(evento) {
 }
 
 export function rankingCarregando() {
-    corpo().innerHTML = '<tr><td colspan="7" class="carregando">Carregando...</td></tr>';
+    corpo().innerHTML = linhaCarregandoTabela();
+    document.getElementById("du-tabela-rodape").innerHTML = "";
 }
 
 export function rankingErro(mensagem) {

@@ -25,6 +25,7 @@
 </div>
 
 {% include "partials/detalhe.html" %}
+{% include "partials/tabela-ampliada.html" %}
 
 <footer class="rodape">
     Acompanhamento de Consignado &middot; Bradesco Expresso
@@ -35,7 +36,7 @@
 <script>
     window.APP_CONFIG = {
         dataInicio: "{{ data_inicio }}",
-        dataHoje: "{{ data_hoje }}"
+        dataFim: "{{ data_fim }}"
     };
 </script>
 <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>

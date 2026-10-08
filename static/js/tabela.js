@@ -6,6 +6,7 @@ import { NOMES_PRODUTO, NOMES_SITUACAO } from "./detalhe-colunas.js";
 import { estado, parametros } from "./estado.js";
 import { blocoValor, dataCurta, diaSemana, inteiro, moedaCompacta, semValor } from "./formato.js";
 import { configurarOrdenacao, ordenar } from "./ordenacao.js";
+import { linhaCarregandoTabela } from "./tabela-carregamento.js";
 
 const ORDEM_COLUNAS = ["INSS", "PUBLICO", "PRIVADO"];
 
@@ -92,7 +93,7 @@ export function iniciarOrdenacaoTabela() {
 
 export function tabelaCarregando() {
     document.getElementById("tabela-diaria-corpo").innerHTML =
-        '<tr><td colspan="10" class="carregando">Carregando...</td></tr>';
+        linhaCarregandoTabela();
 }
 
 export async function carregarTabela() {

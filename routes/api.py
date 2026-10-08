@@ -5,6 +5,7 @@ from flask import Blueprint, jsonify, request, send_file
 
 from db.connection import DatabaseError
 from services.detalhe_service import obter_loja, obter_lojas
+from services.contratos_service import obter_contratos
 from services.du_calendario import obter_calendario
 from services.du_curva_service import obter_curva
 from services.du_ranking_service import obter_ranking
@@ -15,7 +16,9 @@ from services.exportar_service import (
     exportar_equipe,
     exportar_rotina,
     exportar_tabela,
+    periodo_mes_ate_du,
 )
+from services.filtros_comuns import periodo
 from services.filtros_service import listar_filtros
 from services.resumo_service import obter_resumo
 from services.rotina_service import obter_rotina
@@ -89,6 +92,16 @@ def detalhe_lojas():
 @api_bp.get("/detalhe/loja")
 def detalhe_loja():
     return jsonify(obter_loja(request.args))
+
+
+@api_bp.get("/detalhe/contratos")
+def detalhe_contratos():
+    args = dict(request.args)
+    data_ini, data_fim = periodo_mes_ate_du(args) if args.get("modo") == "du" else periodo(args)
+    args.update(data_ini=data_ini, data_fim=data_fim)
+    return jsonify({"linhas": obter_contratos(args), "periodo": {
+        "data_ini": data_ini, "data_fim": data_fim,
+    }})
 
 
 def _xlsx(nome: str, conteudo: bytes):

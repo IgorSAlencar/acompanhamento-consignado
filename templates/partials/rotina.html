@@ -2,18 +2,18 @@
     <h2 class="secao-titulo">Rotina Di&aacute;ria da Equipe <span class="periodo-ref" data-periodo="rotina"></span></h2>
     <ul class="rotina-legenda">
         <li><span class="legenda-escala"></span>mais forte = maior resultado</li>
-        <li><span class="legenda-zero">0</span>dia &uacute;til sem tentativa</li>
+        <li><span class="legenda-zero">0</span>dia &uacute;til sem movimento na m&eacute;trica selecionada</li>
         <li><span class="legenda-clique">&#8599;</span>clique no dia para ver as lojas</li>
     </ul>
 
     <div class="equipe-controles">
         <div class="nivel-abas" id="rotina-metricas" role="group" aria-label="Metrica">
-            <button type="button" class="nivel-aba ativa" data-metrica="tentativas">Tentativas</button>
+            <button type="button" class="nivel-aba" data-metrica="tentativas">Tentativas</button>
             <button type="button" class="nivel-aba" data-metrica="lojas">% lojas que tentaram</button>
             <button type="button" class="nivel-aba" data-metrica="conversao">Convers&atilde;o</button>
-            <button type="button" class="nivel-aba" data-metrica="producao">Produ&ccedil;&atilde;o averbada</button>
-            <button type="button" class="nivel-aba" data-metrica="pendente"
-                title="Aguardando averba&ccedil;&atilde;o + n&atilde;o averbado: mostra quem est&aacute; produzindo mesmo sem averbar">N&atilde;o averbada</button>
+            <button type="button" class="nivel-aba ativa" data-metrica="producao">Produ&ccedil;&atilde;o averbada</button>
+            <button type="button" class="nivel-aba" data-metrica="aguardando">Aguardando averba&ccedil;&atilde;o</button>
+            <button type="button" class="nivel-aba" data-metrica="cancelada">Cancelado</button>
         </div>
         <div class="controles-direita">
             <label class="filtro-inline">N&iacute;vel
@@ -40,7 +40,7 @@
         <table class="tabela tabela-rotina" id="tabela-rotina">
             <thead id="rotina-cabecalho"></thead>
             <tbody id="rotina-corpo">
-                <tr><td class="carregando">Carregando...</td></tr>
+                {% include "partials/tabela-carregamento.html" %}
             </tbody>
         </table>
     </div>

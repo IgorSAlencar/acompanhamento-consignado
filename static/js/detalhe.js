@@ -3,17 +3,21 @@ import { buscar } from "./api.js";
 import {
     NIVEIS, agrupar, colunasGrupo, colunasLojas, filtrarPorTrilha, indiceNivel, nivelInicial, temMovimento,
 } from "./detalhe-agrupar.js";
-import { COLUNAS_CONTRATOS, COLUNAS_TENTATIVAS, NOMES_PRODUTO, NOMES_SITUACAO, htmlCabecalho } from "./detalhe-colunas.js";
+import { COLUNAS_CONTRATOS, COLUNAS_TENTATIVAS, htmlCabecalho } from "./detalhe-colunas.js";
+import { atualizarChips, atualizarMigalhas } from "./detalhe-contexto.js";
+import { colunasContratosPeriodo, barraContratos, filtrarSituacaoContratos, paginaContratos, reiniciarPaginaContratos } from "./detalhe-contratos.js";
 import { parametros } from "./estado.js";
 import { baixarXlsx } from "./exportar-xlsx.js";
-import { descricaoDe } from "./filtros.js";
 import { htmlLinhaTotal } from "./detalhe-total.js";
-import { dataCurta, inteiro } from "./formato.js";
+import { inteiro } from "./formato.js";
 import { configurarOrdenacao, ordenar } from "./ordenacao.js";
+import { linhaCarregandoTabela } from "./tabela-carregamento.js";
 
 const $ = (id) => document.getElementById(id);
 let contexto = null;      // { titulo, filtros, foco }
-let lojasBase = [];       // todas as lojas do contexto (com e sem movimento)
+let lojasBase = [];       // movimento; ativas sem movimento carregadas sob demanda
+let baseIncluiSemMovimento = false;
+let requisicao = 0;
 let trilha = [];          // passos de drill-down: [{ nivel, valor }]
 let agrupamento = "gerencia";
 let visao = null;         // { tipo, colunas, linhas }
@@ -33,8 +37,9 @@ function porProduto() {
 
 function linhasVisiveis() {
     let linhas = visao.linhas;
+    if (contexto.contratosDireto) linhas = filtrarSituacaoContratos(linhas, contexto.filtros.situacao);
     if (busca) {
-        const termo = busca.toLowerCase();
+        const termo = busca.trim().toLowerCase();
         linhas = linhas.filter((l) => Object.values(l).some((v) => String(v).toLowerCase().includes(termo)));
     }
     if (ordem) {
@@ -45,28 +50,11 @@ function linhasVisiveis() {
 }
 
 function chipsContexto() {
-    const f = contexto.filtros;
-    const chips = [f.data_ini === f.data_fim ? dataCurta(f.data_ini) : `${dataCurta(f.data_ini)} a ${dataCurta(f.data_fim)}`];
-    chips.push(f.produto ? NOMES_PRODUTO[f.produto] : "Todos os produtos");
-    if (f.situacao) chips.push(NOMES_SITUACAO[f.situacao]);
-    ["gerencia", "coordenacao", "supervisao"].forEach((nivel) => {
-        if (f[nivel]) chips.push(descricaoDe(nivel, f[nivel]));
-    });
-    $("detalhe-contexto").innerHTML = chips.map((c) => `<span class="chip">${c}</span>`).join("");
+    atualizarChips(contexto);
 }
 
 function migalhas() {
-    const itens = [{ rotulo: "Resumo", acao: () => irParaTrilha(0) }];
-    trilha.forEach((passo, i) => itens.push({ rotulo: passo.valor, acao: () => irParaTrilha(i + 1) }));
-    if (loja) itens.push({ rotulo: loja.nome_loja });
-
-    const alvo = $("detalhe-migalhas");
-    alvo.innerHTML = itens.map((item, i) => {
-        const ultimo = i === itens.length - 1;
-        return `<button type="button" class="migalha" data-passo="${i}" ${ultimo ? "disabled" : ""}>${item.rotulo}</button>`;
-    }).join('<span class="migalha-separador">&gt;</span>');
-    alvo.querySelectorAll("[data-passo]:not([disabled])").forEach((b) =>
-        b.addEventListener("click", () => itens[Number(b.dataset.passo)].acao()));
+    atualizarMigalhas(trilha, loja, irParaTrilha, contexto.contratosDireto);
 }
 
 function renderizarCabecalho() {
@@ -75,6 +63,7 @@ function renderizarCabecalho() {
 
 function renderizarTabela() {
     const linhas = linhasVisiveis();
+    const pagina = contexto.contratosDireto ? paginaContratos(linhas) : linhas;
     $("detalhe-rodape").innerHTML = htmlLinhaTotal(visao, linhas, agrupamento);
     const corpo = $("detalhe-corpo");
     if (!linhas.length) {
@@ -82,11 +71,11 @@ function renderizarTabela() {
         return;
     }
     const clicavel = visao.tipo === "grupos" || visao.tipo === "lojas";
-    corpo.innerHTML = linhas.map((l, i) => `
+    corpo.innerHTML = pagina.map((l, i) => `
         <tr class="${clicavel ? "linha-clicavel" : ""}" data-indice="${i}">
             ${visao.colunas.map((c) => `<td class="${c.classe || ""} celula-produto">${c.html ? c.html(l) : l[c.chave] ?? ""}</td>`).join("")}
         </tr>`).join("");
-    corpo._linhas = linhas;
+    corpo._linhas = pagina;
 }
 
 function abasAgrupamento() {
@@ -107,9 +96,9 @@ function barraResumo() {
         : "Clique em uma loja para ver contratos e tentativas";
     const dica = ehLoja ? dicaLoja
         : `Clique em uma linha para abrir o ${NIVEIS[indiceNivel(agrupamento) + 1].rotulo}`;
-    const rotuloIncluir = contexto.foco === "tentativas" ? "Incluir lojas sem tentativa"
+    const rotuloIncluir = contexto.foco === "tentativas" ? "Incluir lojas ativas sem tentativa"
         : contexto.filtros.situacao && contexto.filtros.situacao !== "AVERBADO"
-            ? "Incluir lojas sem contratos nesta situação" : "Incluir lojas sem consignado averbado";
+            ? "Incluir lojas ativas sem contratos nesta situação" : "Incluir lojas ativas sem consignado averbado";
     $("detalhe-barra").innerHTML = `
         ${abasAgrupamento()}
         <input type="search" id="detalhe-busca" class="campo-busca" placeholder="Buscar...">
@@ -118,7 +107,11 @@ function barraResumo() {
         <button type="button" class="btn-secundario" id="detalhe-exportar">Exportar Excel</button>`;
     $("detalhe-barra").querySelectorAll("[data-agrupar]").forEach((b) =>
         b.addEventListener("click", () => { agrupamento = b.dataset.agrupar; mostrarResumo(); }));
-    $("detalhe-sem-movimento")?.addEventListener("change", (e) => { incluirSemMovimento = e.target.checked; mostrarResumo(); });
+    $("detalhe-sem-movimento")?.addEventListener("change", (e) => {
+        if (e.target.checked && !baseIncluiSemMovimento) return carregarLojas(true);
+        incluirSemMovimento = e.target.checked;
+        mostrarResumo();
+    });
 }
 
 function barraLoja() {
@@ -142,11 +135,28 @@ function definirVisao(tipo, colunas, linhas) {
     ordem = null;
     busca = "";
     renderizarCabecalho();
-    (loja ? barraLoja : barraResumo)();
-    $("detalhe-busca").addEventListener("input", (e) => { busca = e.target.value; renderizarTabela(); });
+    if (contexto.contratosDireto) barraContratos(contexto.filtros, (situacao) => {
+        contexto.filtros.situacao = situacao;
+        chipsContexto();
+        renderizarTabela();
+    }, () => { renderizarTabela(); $("detalhe-tabela").parentElement.scrollTop = 0; }, (periodo) => {
+        Object.assign(contexto.filtros, periodo);
+        delete contexto.filtros.modo;
+        delete contexto.filtros.du;
+        chipsContexto();
+        carregarContratosPeriodo();
+    });
+    else (loja ? barraLoja : barraResumo)();
+    $("detalhe-busca").addEventListener("input", (e) => {
+        busca = e.target.value;
+        reiniciarPaginaContratos();
+        renderizarTabela();
+    });
     $("detalhe-exportar").addEventListener("click", () =>
         baixarXlsx("/api/exportar/detalhe", {
             ...contexto.filtros,
+            visao: contexto.contratosDireto ? "contratos" : "",
+            busca: contexto.contratosDireto ? busca : "",
             incluir_sem_movimento: incluirSemMovimento ? "1" : "",
             por_produto: porProduto() ? "1" : "",
         }, $("detalhe-exportar")));
@@ -155,6 +165,7 @@ function definirVisao(tipo, colunas, linhas) {
 }
 
 function mostrarResumo() {
+    requisicao += 1; // Voltar ao resumo invalida uma consulta de loja em andamento.
     loja = null;
     $("detalhe-titulo").textContent = contexto.titulo;
     const lojas = filtrarPorTrilha(lojasBase, trilha);
@@ -179,18 +190,57 @@ function descer(grupo) {
     mostrarResumo();
 }
 
-function carregando(mensagem = "Carregando...") {
+function carregando() {
+    visao = null;
+    $("detalhe-cabecalho").innerHTML = "";
+    $("detalhe-barra").innerHTML = "";
     $("detalhe-rodape").innerHTML = "";
-    $("detalhe-corpo").innerHTML = `<tr><td colspan="12" class="carregando">${mensagem}</td></tr>`;
+    $("detalhe-corpo").innerHTML = linhaCarregandoTabela();
 }
 
 async function executar(acao) {
+    const id = ++requisicao;
+    const atual = () => id === requisicao;
     carregando();
     try {
-        await acao();
+        await acao(atual);
     } catch (erro) {
-        carregando(`<span class="alerta-texto">${erro.message}</span>`);
+        if (!atual()) return;
+        carregando();
+        const celula = $("detalhe-corpo").querySelector("td");
+        celula.className = "vazio alerta-texto";
+        celula.textContent = erro.message + " ";
+        const tentar = document.createElement("button");
+        tentar.type = "button";
+        tentar.className = "btn-secundario";
+        tentar.textContent = "Tentar novamente";
+        tentar.addEventListener("click", () => executar(acao));
+        celula.append(tentar);
     }
+}
+
+function carregarLojas(incluir = incluirSemMovimento) {
+    const filtros = { ...contexto.filtros, qualquer_movimento: "1",
+        incluir_sem_movimento: incluir ? "1" : "", por_produto: porProduto() ? "1" : "" };
+    return executar(async (atual) => {
+        const dados = await buscar("/api/detalhe/lojas", filtros);
+        if (!atual()) return;
+        lojasBase = dados.linhas;
+        baseIncluiSemMovimento = incluir;
+        incluirSemMovimento = incluir;
+        mostrarResumo();
+    });
+}
+
+function carregarContratosPeriodo() {
+    return executar(async (atual) => {
+        const dados = await buscar("/api/detalhe/contratos", { ...contexto.filtros, situacao: "" });
+        if (!atual()) return;
+        Object.assign(contexto.filtros, dados.periodo);
+        chipsContexto();
+        definirVisao("contratos", colunasContratosPeriodo(contexto.filtros), dados.linhas);
+        $("detalhe-busca").focus();
+    });
 }
 
 function mostrarAbaLoja(tipo) {
@@ -202,14 +252,19 @@ function abrirLoja(dadosDaLoja) {
     loja = dadosDaLoja;
     $("detalhe-titulo").textContent = `${loja.nome_loja} (${loja.chave_loja})`;
     migalhas();
-    return executar(async () => {
-        dadosLoja = await buscar("/api/detalhe/loja", { ...contexto.filtros, loja: loja.chave_loja });
+    const filtros = { ...contexto.filtros, loja: loja.chave_loja };
+    return executar(async (atual) => {
+        const dados = await buscar("/api/detalhe/loja", filtros);
+        if (!atual()) return;
+        dadosLoja = dados;
         const abrirContratos = contexto.foco !== "tentativas" && (dadosLoja.contratos.length || contexto.filtros.situacao);
         mostrarAbaLoja(abrirContratos ? "contratos" : "tentativas");
     });
 }
 
 function fechar() {
+    document.dispatchEvent(new Event("detalhe:fechar"));
+    requisicao += 1;
     $("detalhe").classList.add("oculto");
     document.body.classList.remove("modal-aberto");
 }
@@ -219,7 +274,9 @@ export function iniciarDetalhe() {
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") fechar(); });
 
     configurarOrdenacao("detalhe-tabela", (chave, crescente) => {
+        if (!visao) return;
         ordem = { chave, crescente };
+        reiniciarPaginaContratos();
         renderizarTabela();
     });
 
@@ -233,22 +290,22 @@ export function iniciarDetalhe() {
 }
 
 // Ponto de entrada usado por graficos, tabelas e cards
-export function abrirDetalhe({ titulo, filtros = {}, foco = "" }) {
-    contexto = { titulo, foco, filtros: { ...parametros(), ...filtros, foco } };
+export function abrirDetalhe({ titulo, filtros = {}, foco = "", visaoInicial = "" }) {
+    document.dispatchEvent(new Event("detalhe:abrir"));
+    contexto = { titulo, foco, contratosDireto: visaoInicial === "contratos", filtros: { ...parametros(), ...filtros, foco } };
     delete contexto.filtros.incluir_sem_movimento;
     incluirSemMovimento = Boolean(filtros.incluir_sem_movimento);
+    lojasBase = [];
+    baseIncluiSemMovimento = false;
+    loja = dadosLoja = visao = null;
     trilha = [];
     agrupamento = nivelInicial(contexto.filtros);
     chipsContexto();
+    $("detalhe-titulo").textContent = titulo;
+    $("detalhe-cabecalho").innerHTML = "";
+    $("detalhe-migalhas").innerHTML = "";
     $("detalhe").classList.remove("oculto");
     document.body.classList.add("modal-aberto");
-    executar(async () => {
-        const dados = await buscar("/api/detalhe/lojas", {
-            ...contexto.filtros,
-            incluir_sem_movimento: "1",
-            por_produto: porProduto() ? "1" : "",
-        });
-        lojasBase = dados.linhas;
-        mostrarResumo();
-    });
+    if (contexto.contratosDireto) return carregarContratosPeriodo();
+    return carregarLojas();
 }

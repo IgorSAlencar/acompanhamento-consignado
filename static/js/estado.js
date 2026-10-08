@@ -6,7 +6,7 @@ export const estado = {
     coordenacao: "",
     supervisao: "",
     dataIni: window.APP_CONFIG.dataInicio,
-    dataFim: window.APP_CONFIG.dataHoje,
+    dataFim: window.APP_CONFIG.dataFim,
     nivelEquipe: "gerencia", // visao da secao Equipe (pode ser trocada pelo usuario)
     // Aba Dia Util: produto proprio, metrica, visao do grafico, meses comparados e DU limite
     du: {

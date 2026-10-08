@@ -2,11 +2,12 @@
 from datetime import date, timedelta
 
 from repositories.query_runner import run_query
+from services.contratos_service import hierarquia_contratos_visivel, obter_contratos
 from services.du_calendario import carregar_calendario, du_selecionado, mes_referencia
 from services.du_ranking_service import obter_ranking
 from services.equipe_service import NIVEIS as NIVEIS_EQUIPE
 from services.equipe_service import obter_equipe
-from services.exportar_arvore import NOMES_ABA, adicionar_arvore, niveis_a_partir
+from services.exportar_arvore import COLUNAS_CONTRATOS, NOMES_ABA, NOMES_SITUACAO, adicionar_arvore, niveis_a_partir
 from services.filtros_comuns import PRODUTOS, periodo
 from services.rotina_service import obter_rotina
 from services.tabela_service import obter_tabela
@@ -29,7 +30,9 @@ _METRICAS_ROTINA = {
     "lojas": (lambda c, l: (100 * c["lojas"] / l["qtd_lojas"]) if l["qtd_lojas"] else 0, "percentual", "% lojas que tentaram"),
     "conversao": (lambda c, _l: (100 * c["conv"] / c["tent"]) if c["tent"] else 0, "percentual", "Conversão (%)"),
     "producao": (lambda c, _l: c["vlr"], "reais", "Averbado (R$)"),
-    "pendente": (lambda c, _l: c["vlr_ag"] + c["vlr_nao"], "reais", "Não averbado (R$)"),
+    "aguardando": (lambda c, _l: c["vlr_ag"], "reais", "Aguardando averbação (R$)"),
+    "cancelada": (lambda c, _l: c["vlr_nao"], "reais", "Cancelado (R$)"),
+    "pendente": (lambda c, _l: c["vlr_ag"] + c["vlr_nao"], "reais", "Pendente (R$)"),
 }
 _DIAS_SEMANA = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"]
 
@@ -44,9 +47,9 @@ def exportar_equipe(args) -> tuple[str, bytes]:
 
 
 def exportar_rotina(args) -> tuple[str, bytes]:
-    metrica = args.get("metrica") or "tentativas"
+    metrica = args.get("metrica") or "producao"
     if metrica not in _METRICAS_ROTINA:
-        metrica = "tentativas"
+        metrica = "producao"
     wb = novo_workbook()
     for nivel in niveis_a_partir(args, ("gerencia", "coordenacao", "supervisao")):
         dados = obter_rotina({**dict(args), "nivel": nivel})
@@ -81,6 +84,16 @@ def exportar_du(args) -> tuple[str, bytes]:
 
 def exportar_detalhe(args) -> tuple[str, bytes]:
     wb = novo_workbook()
+    if args.get("visao") == "contratos":
+        linhas = obter_contratos(args)
+        for linha in linhas:
+            linha["produto"] = _NOMES_PRODUTO.get(linha["produto"], linha["produto"])
+            linha["situacao"] = NOMES_SITUACAO.get(linha["situacao"], linha["situacao"])
+        niveis = ("gerencia", "coordenacao", "supervisao")
+        visiveis = hierarquia_contratos_visivel(args)
+        colunas = [c for i, c in enumerate(COLUNAS_CONTRATOS) if i >= 3 or niveis[i] in visiveis]
+        escrever_planilha(wb, "Contratos", colunas, linhas)
+        return _nome("contratos", args), bytes_workbook(wb)
     adicionar_arvore(wb, args, grupos=True, lojas=True)
     return _nome("detalhe", args), bytes_workbook(wb)
 
@@ -100,6 +113,7 @@ def periodo_mes_ate_du(args) -> tuple[str, str]:
         if int(linha["DU"]) <= du:
             dia = linha["DATA"]
             data_fim = dia.date() if hasattr(dia, "date") else dia
+    data_fim = min(data_fim, date.today() - timedelta(days=1))
     return data_ini.isoformat(), data_fim.isoformat()
 
 
@@ -142,7 +156,8 @@ def colunas_rotina(dados: dict, metrica: str) -> list[Coluna]:
         Coluna("Tentativas", lambda l: l["tent"], "inteiro"),
         Coluna("Conversão (%)", lambda l: l["conversao"], "percentual"),
         Coluna("Averbado (R$)", lambda l: l["vlr"], "reais"),
-        Coluna("Não averbado (R$)", lambda l: l["pendente"], "reais"),
+        Coluna("Aguardando averbação (R$)", lambda l: l["aguardando"], "reais"),
+        Coluna("Cancelado (R$)", lambda l: l["cancelada"], "reais"),
     ]
     dias = [
         Coluna(f"{nome} {_data_curta(dia)} ({_dia_semana(dia)})", lambda l, d=dia: l[d], tipo)
@@ -190,9 +205,9 @@ COLUNAS_TABELA = [
     Coluna("Aguardando averbação (R$)", lambda l: l["vlr_aguardando"], "reais"),
     Coluna("Aguardando averbação (QTD)", lambda l: l["qtd_aguardando"], "inteiro"),
     Coluna("Aguardando averbação (lojas)", lambda l: l["lojas_aguardando"], "inteiro"),
-    Coluna("Não averbado (R$)", lambda l: l["vlr_nao_averbado"], "reais"),
-    Coluna("Não averbado (QTD)", lambda l: l["qtd_nao_averbado"], "inteiro"),
-    Coluna("Não averbado (lojas)", lambda l: l["lojas_nao_averbado"], "inteiro"),
+    Coluna("Cancelado (R$)", lambda l: l["vlr_nao_averbado"], "reais"),
+    Coluna("Cancelado (QTD)", lambda l: l["qtd_nao_averbado"], "inteiro"),
+    Coluna("Cancelado (lojas)", lambda l: l["lojas_nao_averbado"], "inteiro"),
 ]
 
 
@@ -223,6 +238,8 @@ def _resumo_rotina(linha: dict, dias: list[str]) -> dict:
         "tent": tent,
         "conversao": round(100 * conv / tent, 1) if tent else 0.0,
         "vlr": sum(c["vlr"] for c in celulas),
+        "aguardando": sum(c["vlr_ag"] for c in celulas),
+        "cancelada": sum(c["vlr_nao"] for c in celulas),
         "pendente": sum(c["vlr_ag"] + c["vlr_nao"] for c in celulas),
     }
 

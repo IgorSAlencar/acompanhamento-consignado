@@ -8,6 +8,7 @@ mimetypes.add_type("application/javascript", ".js")
 mimetypes.add_type("text/css", ".css")
 
 from config import Config
+from http_compressao import comprimir_json
 from routes.api import api_bp
 from routes.pages import pages_bp
 
@@ -17,6 +18,7 @@ def create_app() -> Flask:
     app.config.from_object(Config)
     app.register_blueprint(pages_bp)
     app.register_blueprint(api_bp, url_prefix="/api")
+    app.after_request(comprimir_json)
     return app
 
 

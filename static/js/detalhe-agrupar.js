@@ -120,7 +120,7 @@ export function colunasGrupo(nivel, filtros = {}, trilha = []) {
         .map((c) => (c.chave === nivel ? { ...c, classe: "texto-esquerda celula-nome-grupo" } : c));
     const descricoes = {
         "AGUARDANDO AVERBACAO": "aguardando averbação",
-        "NAO AVERBADO": "com não averbados",
+        "NAO AVERBADO": "com cancelados",
         "PENDENTE": "com pendências",
     };
     const descricao = filtros.foco === "tentativas" ? "com tentativas"

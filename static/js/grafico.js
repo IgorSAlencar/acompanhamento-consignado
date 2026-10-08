@@ -20,8 +20,8 @@ const VISOES = {
         situacao: "AGUARDANDO AVERBACAO",
     },
     nao_averbado: {
-        linha: { rotulo: "Não averbado (R$)", dados: (d) => d.vlr_nao_averbado, formatar: moedaCompacta },
-        barras: { rotulo: "Operações não averbadas", dados: (d) => d.qtd_nao_averbado, formatar: inteiro },
+        linha: { rotulo: "Cancelado (R$)", dados: (d) => d.vlr_nao_averbado, formatar: moedaCompacta },
+        barras: { rotulo: "Operações canceladas", dados: (d) => d.qtd_nao_averbado, formatar: inteiro },
         situacao: "NAO AVERBADO",
     },
     tentativas: {
@@ -35,6 +35,9 @@ const VISOES = {
 let grafico = null;
 let dadosCache = null;
 let visaoAtual = "producao";
+let requisicao = 0;
+let carregando = false;
+let filtrosCache = {};
 
 function rotuloDia(iso) {
     return [diaMes(iso), diaSemana(iso)];
@@ -64,7 +67,7 @@ function abrirDia(dia) {
     abrirDetalhe({
         titulo: tentativas ? `Tentativas em ${dataCurta(dia)}` : `Lojas em ${dataCurta(dia)}`,
         foco: tentativas ? "tentativas" : "",
-        filtros: { data_ini: dia, data_fim: dia, situacao: VISOES[visaoAtual].situacao },
+        filtros: { ...filtrosCache, data_ini: dia, data_fim: dia, situacao: VISOES[visaoAtual].situacao },
     });
 }
 
@@ -107,6 +110,7 @@ function configuracao(dados, visao) {
             layout: { padding: { top: 30 } },
             interaction: { mode: "index", intersect: false },
             onClick: (evento) => {
+                if (carregando) return;
                 const pontos = grafico.getElementsAtEventForMode(evento, "index", { intersect: false }, true);
                 if (pontos.length) abrirDia(dados.dias[pontos[0].index]);
             },
@@ -155,6 +159,7 @@ function desenhar() {
 }
 
 export function iniciarAlternadorGrafico() {
+    document.getElementById("grafico-tentar-novamente").addEventListener("click", () => carregarGrafico().catch(() => {}));
     const botoes = document.querySelectorAll("#grafico-visoes .nivel-aba");
     botoes.forEach((botao) => {
         botao.addEventListener("click", () => {
@@ -166,6 +171,37 @@ export function iniciarAlternadorGrafico() {
 }
 
 export async function carregarGrafico() {
-    dadosCache = await buscar("/api/serie-diaria", parametros());
-    desenhar();
+    const id = ++requisicao;
+    const filtros = { ...parametros() };
+    const area = document.getElementById("grafico-area");
+    const status = document.getElementById("grafico-status");
+    const mensagem = document.getElementById("grafico-status-mensagem");
+    const tentar = document.getElementById("grafico-tentar-novamente");
+    carregando = true;
+    area.setAttribute("aria-busy", "true");
+    mensagem.textContent = "Carregando gráfico...";
+    tentar.hidden = true;
+    status.hidden = false;
+    try {
+        const dados = await buscar("/api/serie-diaria", filtros);
+        if (id !== requisicao) return;
+        dadosCache = dados;
+        filtrosCache = filtros;
+        desenhar();
+        status.hidden = true;
+    } catch (erro) {
+        if (id !== requisicao) return;
+        mensagem.textContent = dadosCache ? "Não foi possível atualizar. O gráfico anterior foi mantido." : erro.message;
+        tentar.hidden = false;
+        throw erro;
+    } finally {
+        if (id === requisicao) {
+            carregando = false;
+            area.setAttribute("aria-busy", "false");
+        }
+    }
+}
+
+export function redimensionarGrafico() {
+    grafico?.resize();
 }

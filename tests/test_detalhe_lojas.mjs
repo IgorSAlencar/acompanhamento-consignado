@@ -55,7 +55,7 @@ test("legenda e rodapé identificam a contagem correspondente ao contexto", () =
         [{}, 1, "com consignado averbado"],
         [{foco: "tentativas"}, 1, "com tentativas"],
         [{situacao: "AGUARDANDO AVERBACAO"}, 1, "aguardando averbação"],
-        [{situacao: "NAO AVERBADO"}, 1, "com não averbados"],
+        [{situacao: "NAO AVERBADO"}, 1, "com cancelados"],
         [{situacao: "PENDENTE"}, 2, "com pendências"],
     ]) {
         const grupo = agrupar(lojas, "gerencia", filtros.foco, filtros.situacao)[0];

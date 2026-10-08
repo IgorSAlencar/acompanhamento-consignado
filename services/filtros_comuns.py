@@ -1,5 +1,5 @@
 """Helpers compartilhados de filtros (hierarquia, loja, produto, situacao e periodo)."""
-from datetime import date
+from datetime import date, timedelta
 
 PRODUTOS = ("INSS", "PRIVADO", "PUBLICO")
 
@@ -26,15 +26,15 @@ _CAMPOS_HIERARQUIA = (
 
 
 def inicio_mes_vigente() -> str:
-    """Primeiro dia do mes atual, usado como inicio padrao do filtro De."""
-    hoje = date.today()
-    return date(hoje.year, hoje.month, 1).isoformat()
+    """Primeiro dia do mes de D-1, usado como inicio padrao do filtro De."""
+    ontem = date.today() - timedelta(days=1)
+    return date(ontem.year, ontem.month, 1).isoformat()
 
 
 def periodo(args) -> tuple[str, str]:
-    """Datas ini/fim no formato ISO (AAAA-MM-DD)."""
+    """Datas ini/fim ISO; periodo automatico termina em D-1 (ontem)."""
     data_ini = args.get("data_ini") or inicio_mes_vigente()
-    data_fim = args.get("data_fim") or date.today().isoformat()
+    data_fim = args.get("data_fim") or (date.today() - timedelta(days=1)).isoformat()
     return data_ini, data_fim
 
 

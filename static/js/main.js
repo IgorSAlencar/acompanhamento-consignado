@@ -9,6 +9,8 @@ import { carregarEquipe, equipeCarregando, iniciarControlesEquipe } from "./equi
 import { carregarRotina, iniciarRotina, rotinaCarregando } from "./rotina.js";
 import { carregarDu, iniciarDu } from "./du.js";
 import { atualizarPeriodoGeral } from "./periodo.js";
+import { iniciarAmpliacaoTabelas } from "./tabela-ampliada.js";
+import { iniciarConsultaContratos } from "./consultar-contratos.js";
 
 const erroGlobal = () => document.getElementById("erro-global");
 
@@ -80,6 +82,8 @@ async function iniciar() {
     fixarAlturaTopo();
     iniciarAbas();
     iniciarDetalhe();
+    iniciarAmpliacaoTabelas();
+    iniciarConsultaContratos();
     iniciarCliquesKpis();
     iniciarAlternadorGrafico();
     iniciarOrdenacaoTabela();

@@ -5,13 +5,17 @@
             <div class="nivel-abas" id="grafico-visoes" role="group" aria-label="Visao do grafico">
                 <button type="button" class="nivel-aba ativa" data-visao="producao">Produ&ccedil;&atilde;o averbada</button>
                 <button type="button" class="nivel-aba" data-visao="aguardando">Aguardando averba&ccedil;&atilde;o</button>
-                <button type="button" class="nivel-aba" data-visao="nao_averbado">N&atilde;o averbado</button>
+                <button type="button" class="nivel-aba" data-visao="nao_averbado">Cancelado</button>
                 <button type="button" class="nivel-aba" data-visao="tentativas">Tentativas</button>
             </div>
             <span class="dica">Clique em um dia para abrir por loja</span>
         </div>
-        <div class="grafico-area">
+        <div class="grafico-area" id="grafico-area" aria-busy="false">
             <canvas id="grafico-diario"></canvas>
+            <div class="grafico-status" id="grafico-status" role="status" aria-live="polite" hidden>
+                <span id="grafico-status-mensagem"></span>
+                <button type="button" class="btn-secundario" id="grafico-tentar-novamente" hidden>Tentar novamente</button>
+            </div>
         </div>
     </div>
 </section>

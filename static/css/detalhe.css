@@ -119,3 +119,18 @@ body.modal-aberto { overflow: hidden; }
 .linha-clicavel { cursor: pointer; }
 
 .linha-clicavel:hover td { background: var(--tinta-inss) !important; }
+.contratos-periodo {
+    display: flex;
+    flex-basis: 100%;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+.contratos-periodo input {
+    font: inherit;
+    padding: 6px 8px;
+    border: 1px solid var(--cinza-300);
+    border-radius: 4px;
+    background: var(--branco);
+    color: var(--texto);
+}
