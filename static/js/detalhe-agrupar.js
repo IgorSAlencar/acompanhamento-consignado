@@ -3,6 +3,7 @@ import { COLUNAS_LOJAS, PRODUTOS, colunasMetricas } from "./detalhe-colunas.js";
 import { inteiro } from "./formato.js";
 
 export const NIVEIS = [
+    { chave: "segmento", rotulo: "Segmento" },
     { chave: "gerencia", rotulo: "Ger. Gestão" },
     { chave: "coordenacao", rotulo: "Ger. Comercial III" },
     { chave: "supervisao", rotulo: "Ger. Comercial" },
@@ -30,6 +31,7 @@ export function nivelInicial(filtros) {
     if (filtros.loja || filtros.supervisao) return "loja";
     if (filtros.coordenacao) return "supervisao";
     if (filtros.gerencia) return "coordenacao";
+    if (filtros.escopo === "macro" && !filtros.segmento) return "segmento";
     return "gerencia";
 }
 
@@ -38,11 +40,12 @@ export function niveisDisponiveis(filtros) {
 }
 
 export function filtrarPorTrilha(lojas, trilha) {
-    return lojas.filter((l) => trilha.every((passo) => l[passo.nivel] === passo.valor));
+    return lojas.filter((l) => trilha.every((passo) => (l[passo.nivel] || "Sem hierarquia") === passo.valor));
 }
 
 function niveisFixados(filtros = {}, trilha = []) {
     const fixados = new Set(trilha.map((passo) => passo.nivel));
+    if (filtros.escopo !== "macro" || filtros.segmento) fixados.add("segmento");
     if (filtros.loja || filtros.supervisao) {
         ["gerencia", "coordenacao", "supervisao"].forEach((nivel) => fixados.add(nivel));
     } else if (filtros.coordenacao) {
@@ -115,7 +118,7 @@ export function agrupar(lojas, nivel, foco = "", situacao = "") {
 
 export function colunasGrupo(nivel, filtros = {}, trilha = []) {
     const fixados = niveisFixados(filtros, trilha);
-    const hierarquia = COLUNAS_LOJAS.filter((c) =>
+    const hierarquia = colunasBase(filtros).filter((c) =>
         c.hierarquia && indiceNivel(c.chave) <= indiceNivel(nivel) && hierarquiaVisivel(c, nivel, fixados))
         .map((c) => (c.chave === nivel ? { ...c, classe: "texto-esquerda celula-nome-grupo" } : c));
     const descricoes = {
@@ -135,6 +138,12 @@ export function colunasGrupo(nivel, filtros = {}, trilha = []) {
 
 export function colunasLojas(filtros = {}, trilha = []) {
     const fixados = niveisFixados(filtros, trilha);
-    const identificacao = COLUNAS_LOJAS.filter((c) => !c.metrica && hierarquiaVisivel(c, "loja", fixados));
+    const identificacao = colunasBase(filtros).filter((c) => !c.metrica && hierarquiaVisivel(c, "loja", fixados));
     return [...identificacao, ...colunasMetricas(filtros)];
+}
+
+function colunasBase(filtros) {
+    const segmento = { chave: "segmento", rotulo: "Segmento", valor: (l) => l.segmento || "",
+        classe: "texto-esquerda celula-hierarquia", hierarquia: true };
+    return filtros.escopo === "macro" ? [segmento, ...COLUNAS_LOJAS] : COLUNAS_LOJAS;
 }

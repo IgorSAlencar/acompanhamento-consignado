@@ -1,5 +1,6 @@
 """Tabela diaria: producao averbada por produto + tentativas + valores a parte."""
 from repositories.query_runner import run_query
+from services.visao_service import tokens_visao
 from services.filtros_comuns import (
     PRODUTOS,
     filtro_hierarquia,
@@ -35,12 +36,12 @@ def obter_tabela(args) -> list[dict]:
     producao = run_query(
         "tabela_producao_diaria",
         params_h + [data_ini, data_fim],
-        {"FILTROS": frag_h},
+        {**tokens_visao(args), "FILTROS": frag_h},
     )
     tentativas = run_query(
         "tabela_tentativas_diaria",
         params_h + [data_ini, data_fim],
-        {"FILTROS": frag_h},
+        {**tokens_visao(args), "FILTROS": frag_h},
     )
 
     linhas: dict[str, dict] = {}

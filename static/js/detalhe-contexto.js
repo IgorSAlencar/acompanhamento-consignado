@@ -6,6 +6,7 @@ export function atualizarChips(contexto) {
     const f = contexto.filtros;
     const chips = [f.data_ini === f.data_fim ? dataCurta(f.data_ini) : `${dataCurta(f.data_ini)} a ${dataCurta(f.data_fim)}`];
     chips.push(f.produto ? NOMES_PRODUTO[f.produto] : "Todos os produtos");
+    if (f.escopo === "macro") chips.push(f.segmento || "Todos os segmentos · visão macro");
     if (f.situacao) chips.push(NOMES_SITUACAO[f.situacao]);
     ["gerencia", "coordenacao", "supervisao"].forEach((nivel) => {
         if (f[nivel]) chips.push(descricaoDe(nivel, f[nivel]));

@@ -1,5 +1,6 @@
 """Drill-down ate o maior detalhe: numero -> lojas -> contratos / tentativas da loja."""
 from repositories.query_runner import run_query
+from services.visao_service import tokens_visao
 from services.filtros_comuns import (
     PRODUTOS,
     filtro_hierarquia,
@@ -50,6 +51,7 @@ def obter_lojas(args) -> list[dict]:
         "detalhe_lojas",
         [mes_ini, mes_fim] + [data_ini, data_fim] + params_pp + params_s + [data_ini, data_fim] + params_pt + params_h,
         {
+            **tokens_visao(args),
             "FILTROS": frag_h,
             "PRODUTO_P": frag_pp,
             "SITUACAO": frag_s,
@@ -65,6 +67,7 @@ def obter_lojas(args) -> list[dict]:
         conv = int(l["QTD_CONVERTIDAS"])
         resultado.append({
             "chave_loja": l["CHAVE_LOJA"],
+            "segmento": l.get("SEGMENTO", ""),
             "nome_loja": l["NOME_LOJA"],
             "municipio": l["MUNICIPIO"],
             "uf": l["UF"],
@@ -83,7 +86,7 @@ def obter_lojas(args) -> list[dict]:
             "pct_conversao": round(100 * conv / tent, 1) if tent else 0.0,
         })
     if args.get("por_produto") == "1" and not produto_selecionado(args):
-        _anexar_produtos(resultado, frag_h, params_h, data_ini, data_fim)
+        _anexar_produtos(resultado, frag_h, params_h, data_ini, data_fim, args)
     return resultado
 
 
@@ -94,12 +97,12 @@ def _produto_vazio() -> dict:
     }
 
 
-def _anexar_produtos(lojas, frag_h, params_h, data_ini, data_fim) -> None:
+def _anexar_produtos(lojas, frag_h, params_h, data_ini, data_fim, args) -> None:
     """Quebra tentativas e convertidas de cada loja por produto (visao Geral)."""
     linhas = run_query(
         "detalhe_tentativas_produto",
         params_h + [data_ini, data_fim],
-        {"FILTROS": frag_h},
+        {**tokens_visao(args), "FILTROS": frag_h},
     )
     por_loja = {int(loja["chave_loja"]): _produto_vazio() for loja in lojas}
     for linha in linhas:
@@ -147,6 +150,7 @@ def obter_loja(args) -> dict:
                 "nsu": str(c["NSU_TRX"]),
                 "cpf": _formatar_cpf(c["CPF_CLIENTE"]),
                 "valor": float(c["VLR_CONTRATO"]),
+                "motivo_dataprev": c["MOTIVO_DATAPREV"] or "",
             }
             for c in contratos
         ],

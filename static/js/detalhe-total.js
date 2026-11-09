@@ -5,7 +5,7 @@ import { inteiro } from "./formato.js";
 // Colunas que identificam a linha e nao devem ser somadas
 const IDENTIFICADORES = new Set([
     "gerencia", "coordenacao", "supervisao", "chave_loja", "nome_loja",
-    "dia", "produto", "situacao", "contrato", "nsu", "cpf",
+    "dia", "produto", "situacao", "motivo_dataprev", "contrato", "nsu", "cpf",
 ]);
 
 const PRODUTOS = ["INSS", "PRIVADO", "PUBLICO"];

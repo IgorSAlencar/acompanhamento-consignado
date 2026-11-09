@@ -1,5 +1,6 @@
 """Folhas comuns do drill-down: grupos, lojas, contratos e tentativas."""
 from repositories.query_runner import run_query
+from services.visao_service import tokens_visao, modo_macro
 from services.contratos_service import parametros_consulta_contratos
 from services.detalhe_service import obter_lojas
 from services.filtros_comuns import (
@@ -10,8 +11,10 @@ from services.filtros_comuns import (
 )
 from services.xlsx_planilha import Coluna, escrever_planilha
 
-NIVEIS = ("gerencia", "coordenacao", "supervisao", "loja")
+NIVEIS = ("segmento", "gerencia", "coordenacao", "supervisao", "loja")
+COLUNA_SEGMENTO = Coluna("Segmento", lambda l: l.get("segmento") or "", "texto")
 NOMES_ABA = {
+    "segmento": "Segmentos",
     "gerencia": "Ger. Gestão",
     "coordenacao": "Ger. Comercial III",
     "supervisao": "Ger. Comercial",
@@ -38,10 +41,14 @@ def nivel_inicial(args) -> str:
         return "supervisao"
     if args.get("gerencia"):
         return "coordenacao"
+    if modo_macro(args) and not args.get("segmento"):
+        return "segmento"
     return "gerencia"
 
 
 def niveis_a_partir(args, ordem: tuple[str, ...]) -> list[str]:
+    if modo_macro(args) and not args.get("segmento") and "segmento" not in ordem:
+        ordem = ("segmento",) + ordem
     inicio = nivel_inicial(args)
     if inicio not in ordem:
         return []
@@ -133,7 +140,7 @@ def listar_tentativas(args) -> list[dict]:
     linhas = run_query(
         "exportar_tentativas",
         params_h + [data_ini, data_fim] + params_p,
-        {"FILTROS": frag_h, "PRODUTO": frag_p},
+        {**tokens_visao(args), "FILTROS": frag_h, "PRODUTO": frag_p},
     )
     return [_tentativa(linha) for linha in linhas]
 
@@ -157,12 +164,12 @@ def adicionar_arvore(wb, args, grupos: bool = True, lojas: bool = True) -> None:
                 linhas = agrupar(todas, nivel, foco, situacao)
                 if foco == "tentativas":
                     linhas = [grupo for grupo in linhas if grupo["qtd_tentativas"] > 0]
-                escrever_planilha(wb, NOMES_ABA[nivel], colunas_grupo(nivel, foco, por_produto), linhas)
+                escrever_planilha(wb, NOMES_ABA[nivel], colunas_grupo(nivel, foco, por_produto, modo_macro(args)), linhas)
         if lojas:
-            escrever_planilha(wb, "Lojas", colunas_lojas(foco, por_produto), visiveis)
+            escrever_planilha(wb, "Lojas", colunas_lojas(foco, por_produto, modo_macro(args)), visiveis)
     if foco != "tentativas":
-        escrever_planilha(wb, "Contratos", COLUNAS_CONTRATOS, listar_contratos(args))
-    escrever_planilha(wb, "Tentativas", COLUNAS_TENTATIVAS, listar_tentativas(args))
+        escrever_planilha(wb, "Contratos", ([COLUNA_SEGMENTO] if modo_macro(args) else []) + COLUNAS_CONTRATOS, listar_contratos(args))
+    escrever_planilha(wb, "Tentativas", ([COLUNA_SEGMENTO] if modo_macro(args) else []) + COLUNAS_TENTATIVAS, listar_tentativas(args))
 
 
 def _colunas_por_produto() -> list[Coluna]:
@@ -192,15 +199,15 @@ def _metricas_loja(foco: str, por_produto: bool) -> list[Coluna]:
     return COLUNAS_METRICAS_LOJA
 
 
-def colunas_grupo(nivel: str, foco: str = "", por_produto: bool = False) -> list[Coluna]:
+def colunas_grupo(nivel: str, foco: str = "", por_produto: bool = False, macro: bool = False) -> list[Coluna]:
     pais = [Coluna(NOMES_ABA[p], lambda l, p=p: l.get(p) or "", "texto")
-            for p in NIVEIS[:NIVEIS.index(nivel)]]
-    nome = [Coluna(NOMES_ABA[nivel], lambda l, n=nivel: l.get(n) or "", "texto")]
+            for p in NIVEIS[:NIVEIS.index(nivel)] if macro or p != "segmento"]
+    nome = [Coluna("Segmento" if nivel == "segmento" else NOMES_ABA[nivel], lambda l, n=nivel: l.get(n) or "", "texto")]
     return pais + nome + _metricas_grupo(foco, por_produto)
 
 
-def colunas_lojas(foco: str = "", por_produto: bool = False) -> list[Coluna]:
-    return [
+def colunas_lojas(foco: str = "", por_produto: bool = False, macro: bool = False) -> list[Coluna]:
+    return ([COLUNA_SEGMENTO] if macro else []) + [
         Coluna("Ger. Gestão", lambda l: l.get("gerencia") or ""),
         Coluna("Ger. Comercial III", lambda l: l.get("coordenacao") or ""),
         Coluna("Ger. Comercial", lambda l: l.get("supervisao") or ""),
@@ -247,6 +254,7 @@ COLUNAS_CONTRATOS = [
     Coluna("Data", lambda c: c["dia"], "data"),
     Coluna("Produto", lambda c: c["produto"]),
     Coluna("Situação", lambda c: c["situacao"]),
+    Coluna("Motivo DataPrev", lambda c: c["motivo_dataprev"]),
     Coluna("Contrato", lambda c: c["contrato"]),
     Coluna("NSU", lambda c: c["nsu"]),
     Coluna("CPF", lambda c: c["cpf"]),
@@ -275,6 +283,7 @@ def _contrato(linha: dict) -> dict:
     produto = produto_do_indicador(linha["INDICADOR"])
     situacao = linha["SITUACAO"]
     return {
+        "segmento": linha.get("SEGMENTO", ""),
         "gerencia": linha["DESC_GERENCIA_AREA"],
         "coordenacao": linha["DESC_COORDENACAO"],
         "supervisao": linha["DESC_SUPERVISAO"],
@@ -287,6 +296,7 @@ def _contrato(linha: dict) -> dict:
         "nsu": str(linha["NSU_TRX"]),
         "cpf": formatar_cpf(linha["CPF_CLIENTE"]),
         "valor": float(linha["VLR_CONTRATO"]),
+        "motivo_dataprev": linha["MOTIVO_DATAPREV"] or "",
     }
 
 
@@ -295,6 +305,7 @@ def _tentativa(linha: dict) -> dict:
     conv = int(linha["QTD_CONVERTIDOS"])
     produto = linha["PRODUTO"]
     return {
+        "segmento": linha.get("SEGMENTO", ""),
         "gerencia": linha["DESC_GERENCIA_AREA"],
         "coordenacao": linha["DESC_COORDENACAO"],
         "supervisao": linha["DESC_SUPERVISAO"],

@@ -6,6 +6,7 @@ from flask import current_app, has_app_context
 from config import Config
 from db.connection import get_connection
 from repositories.query_cache import QueryCache
+from repositories.lojas_sql import TOKENS_LOJAS
 
 SQL_DIR = Path(__file__).resolve().parent.parent / "sql" / "app"
 _cache = QueryCache()
@@ -18,7 +19,7 @@ def run_query(nome: str, params=(), tokens: dict | None = None) -> list[dict]:
     Os valores de tokens vem SEMPRE de listas fixas no codigo, nunca do usuario.
     """
     sql = (SQL_DIR / f"{nome}.sql").read_text(encoding="utf-8")
-    for token, trecho in (tokens or {}).items():
+    for token, trecho in {**TOKENS_LOJAS, **(tokens or {})}.items():
         sql = sql.replace(f"/*{token}*/", trecho)
 
     params = tuple(params)

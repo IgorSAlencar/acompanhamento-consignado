@@ -3,15 +3,18 @@
         <div class="topo-marca">
             <img class="marca" src="{{ url_for('static', filename='img/bradesco-branco.png') }}" alt="Bradesco">
             <span class="topo-titulo">Cockpit &middot; Bradesco Expresso</span>
+            <button type="button" id="alternar-macro" class="acesso-macro" aria-label="Alternar visão macro"
+                aria-pressed="false" title="Abrir visão macro">&#9671;</button>
+            <span id="macro-indicador" class="macro-indicador" hidden>Visão macro</span>
         </div>
     </div>
     <div class="topo-navegacao">
         <nav class="abas topo-conteudo" id="abas-produto" aria-label="Produto">
             <button type="button" class="aba ativa" data-produto="">Geral</button>
+            <button type="button" class="aba" data-modo="du" title="An&aacute;lise comparativa por dia &uacute;til">Dia &Uacute;til</button>
             <button type="button" class="aba" data-produto="INSS">INSS</button>
             <button type="button" class="aba" data-produto="PRIVADO">Privado</button>
             <button type="button" class="aba" data-produto="PUBLICO">P&uacute;blico</button>
-            <button type="button" class="aba" data-modo="du" title="An&aacute;lise comparativa por dia &uacute;til">Dia &Uacute;til</button>
         </nav>
     </div>
 </header>

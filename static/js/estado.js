@@ -1,5 +1,7 @@
 // Estado global dos filtros do cockpit
 export const estado = {
+    escopo: "comercial",
+    segmento: "",
     modo: "geral", // "geral" (abas de produto) ou "du" (analise por dia util)
     produto: "",
     gerencia: "",
@@ -21,6 +23,7 @@ export const estado = {
 
 export function parametros() {
     return {
+        ...parametrosVisao(),
         produto: estado.produto,
         gerencia: estado.gerencia,
         coordenacao: estado.coordenacao,
@@ -33,6 +36,7 @@ export function parametros() {
 // Parametros da aba Dia Util (hierarquia compartilhada + controles proprios)
 export function parametrosDu() {
     return {
+        ...parametrosVisao(),
         produto: estado.du.produto,
         gerencia: estado.gerencia,
         coordenacao: estado.coordenacao,
@@ -46,7 +50,7 @@ export function parametrosDu() {
 export function nivelDerivado() {
     if (estado.coordenacao || estado.supervisao) return "supervisao";
     if (estado.gerencia) return "coordenacao";
-    return "gerencia";
+    return estado.escopo === "macro" && !estado.segmento ? "segmento" : "gerencia";
 }
 
 // Na aba Dia Util o ranking tem nivel Loja: ao filtrar um Ger. Comercial, mostra as lojas
@@ -54,5 +58,9 @@ export function nivelDerivadoDu() {
     if (estado.supervisao) return "loja";
     if (estado.coordenacao) return "supervisao";
     if (estado.gerencia) return "coordenacao";
-    return "gerencia";
+    return estado.escopo === "macro" && !estado.segmento ? "segmento" : "gerencia";
+}
+
+export function parametrosVisao() {
+    return estado.escopo === "macro" ? { escopo: "macro", segmento: estado.segmento } : {};
 }

@@ -4,6 +4,7 @@ Series por mes para 4 metricas (vlr, qtd, lojas, tentativas) + KPIs de
 ritmo/projecao ate o DU N. Producao/valor = so contratos AVERBADOS.
 """
 from repositories.query_runner import run_query
+from services.visao_service import tokens_visao
 from services.du_calendario import carregar_calendario, du_selecionado, intervalo_datas
 from services.du_padrao import desvio_percentual
 from services.filtros_comuns import (
@@ -87,7 +88,7 @@ def obter_curva(args) -> dict:
     frag_pt, params_pt = filtro_produto_tentativas(args)
 
     data_ini, data_fim = calendario["data_ini"], calendario["data_fim"]
-    tokens_prod = {"FILTROS": frag_h, "PRODUTO": frag_pp}
+    tokens_prod = {**tokens_visao(args), "FILTROS": frag_h, "PRODUTO": frag_pp}
     params_prod = params_h + [data_ini, data_fim, data_ini, data_fim] + params_pp
 
     producao = run_query("du_curva_producao", params_prod, tokens_prod)
@@ -95,7 +96,7 @@ def obter_curva(args) -> dict:
     tentativas = run_query(
         "du_curva_tentativas",
         params_h + [data_ini, data_fim, data_ini, data_fim] + params_pt,
-        {"FILTROS": frag_h, "PRODUTO": frag_pt},
+        {**tokens_visao(args), "FILTROS": frag_h, "PRODUTO": frag_pt},
     )
 
     series = _series_vazias(calendario)

@@ -195,6 +195,10 @@ function recarregar() {
 }
 
 export function iniciarRotina() {
+    document.addEventListener("visao:alterada", () => {
+        opcoes.nivel = estado.escopo === "macro" ? "segmento" : "supervisao";
+        $("rotina-nivel").value = opcoes.nivel;
+    });
     const botoes = document.querySelectorAll("#rotina-metricas .nivel-aba");
     botoes.forEach((botao) => botao.addEventListener("click", () => {
         botoes.forEach((b) => b.classList.toggle("ativa", b === botao));

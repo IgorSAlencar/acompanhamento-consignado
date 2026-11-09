@@ -10,6 +10,7 @@ import { configurarOrdenacao, ordenar } from "./ordenacao.js";
 import { linhaCarregandoTabela } from "./tabela-carregamento.js";
 
 const ROTULOS = {
+    segmento: "Segmento",
     gerencia: "Ger. Gest&atilde;o",
     coordenacao: "Ger. Comercial III",
     supervisao: "Ger. Comercial",
@@ -67,6 +68,12 @@ function montarCabecalho(dados) {
 function montarMigalhas() {
     const alvo = document.getElementById("equipe-migalhas");
     const partes = [{ rotulo: "Todas", acao: () => selecionar("gerencia", "") }];
+    if (estado.escopo === "macro") {
+        partes[0] = { rotulo: "Todos os segmentos", acao: () => {
+            selecionar("segmento", ""); selecionar("gerencia", "");
+        } };
+        if (estado.segmento) partes.push({ rotulo: estado.segmento, acao: () => selecionar("gerencia", "") });
+    }
 
     if (estado.gerencia) {
         partes.push({ rotulo: descricaoDe("gerencia", estado.gerencia), acao: () => selecionar("gerencia", estado.gerencia) });
@@ -92,7 +99,8 @@ function montarMigalhas() {
         } else {
             botao.addEventListener("click", () => {
                 parte.acao();
-                estado.nivelEquipe = indice === 0 ? "gerencia" : "coordenacao";
+                estado.nivelEquipe = estado.escopo === "macro" && !estado.segmento ? "segmento"
+                    : (estado.gerencia ? "coordenacao" : "gerencia");
                 aoNavegar();
             });
         }

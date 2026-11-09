@@ -37,6 +37,14 @@ templates/
 
 Fluxo: `routes` → `services` → `run_query("arquivo")` → `sql/app/<arquivo>.sql`.
 
+### Visão macro opcional
+
+A página sempre abre na visão comercial original. O botão discreto `◇` ao lado do título aparece ao passar o mouse ou receber foco e alterna a visão macro; clicar novamente restaura os filtros comerciais. É uma troca de visualização, não autenticação.
+
+No modo macro, `escopo=macro` inclui os seis segmentos do CASE, mantém os filtros de hierarquia e adiciona `segmento` (validado e parametrizado). O nível `segmento` permite navegar para Ger. Gestão → Comercial III → Comercial → loja. As mesmas APIs, gráficos, tabelas, Dia Útil e exportações recebem o escopo. Lojas sem hierarquia entram via LEFT JOIN e podem aparecer como Sem hierarquia. O modo comercial mantém INNER JOIN e o recorte Ilha 2.0 / Ilha / Varejo.
+
+Trechos fixos do cadastro em `repositories/lojas_sql.py`; regras de escopo em `services/visao_service.py`; acesso e estado visual em `static/js/visao-macro.js`. Não mudar as condições nem a ordem do CASE original. Testes reais adicionais em `tests/test_macro_sqlserver.py` (ativados com `TESTAR_SQLSERVER=1`).
+
 ---
 
 ## APIs (`/api`)
@@ -89,7 +97,11 @@ Layout: topo vermelho (marca + abas produto **e Dia Útil**) + **lateral esquerd
 - Ativas: `DATAWAREHOUSE..TB_INDICADORES_BE` (`PERIODO` AAAAMM, `QTD_ATIVOS > 0`)
 - Calendário DU: `MESU..TB_DIA_UTIL` (`DT_REFERENCIA`, `QT_DIAS_UTEIS_MES`; **0 conta como 1**)
 
-Universo base das consultas: `TIPO_POSTO IN ('Tradicional','Ilha')` + hierarquia.
+Universo base das consultas: classificação por `CASE` no cadastro de lojas + hierarquia, incluindo apenas `Ilha 2.0`, `Ilha` e `Varejo` (sem filtro por `TIPO_POSTO`). Preservar o CASE da imagem fornecida pelo usuário: `ILHA_V2 > 0` → Ilha 2.0; `BE_ILHA > 0` → Ilha; `BE_EXCLUSIVO > '0'` → Exclusivo; `COD_GRUPO_ECON IN (36, 202)` → Casas Bahia; `DESC_GERENCIA_NEGOCIO IS NOT NULL` → Grandes Redes; demais → Varejo. A primeira condição atendida prevalece.
+
+Colunas desse `CASE`: inclusão idempotente em `sql/schema/classificacao_lojas.sql` (quatro `INT NULL` e descrição como `VARCHAR(255) NULL`). A migração converte flags antigos `'S'` para `1`, mantendo `NULL` nos demais casos. Se todas estiverem `NULL`, o resultado é Varejo. Teste real de integração: `TESTAR_SQLSERVER=1 python -m unittest tests.test_consultas_sqlserver -v`; consulta o SQL Server, sem alterar dados.
+
+Preenchimento aleatório solicitado pelo usuário: `sql/schema/preencher_classificacao_lojas.sql` (execução manual; refaz os valores e o sorteio). `BE_ILHA = 1` apenas para `TIPO_POSTO = 'Ilha'`; cinco lojas desse tipo sorteadas com `ILHA_V2 = 1`; `BE_EXCLUSIVO = 1` apenas para Exclusivo; Gerenciada recebe uma descrição de Gerenciada 1 a Gerenciada 5; `TIPO_POSTO = 'Mesa de Negócios'` corresponde a Casas Bahia e recebe código 36 ou 202. Demais campos ficam `NULL`. Não altera `TIPO_POSTO` nem cria lojas. O usuário autorizou flags numéricos para preservar o CASE original.
 
 ### Situação e produto
 

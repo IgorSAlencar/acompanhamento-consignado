@@ -125,6 +125,10 @@ export const COLUNAS_CONTRATOS = [
         csv: (c) => NOMES_SITUACAO[c.situacao] || c.situacao,
         html: (c) => `<span class="selo ${CLASSE_SITUACAO[c.situacao] || ""}">${NOMES_SITUACAO[c.situacao] || c.situacao}</span>`,
     },
+    {
+        chave: "motivo_dataprev", rotulo: "Motivo DataPrev", valor: (c) => c.motivo_dataprev || "",
+        classe: "texto-esquerda celula-motivo",
+    },
     { chave: "contrato", rotulo: "Contrato", valor: (c) => c.contrato, html: (c) => identificadorInteiro(c.contrato) },
     { chave: "nsu", rotulo: "NSU", valor: (c) => c.nsu, html: (c) => identificadorInteiro(c.nsu) },
     { chave: "cpf", rotulo: "CPF", valor: (c) => c.cpf },

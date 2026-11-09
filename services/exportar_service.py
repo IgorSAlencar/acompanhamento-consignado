@@ -12,6 +12,8 @@ from services.filtros_comuns import PRODUTOS, periodo
 from services.rotina_service import obter_rotina
 from services.tabela_service import obter_tabela
 from services.xlsx_planilha import Coluna, bytes_workbook, escrever_planilha, novo_workbook
+from services.visao_service import modo_macro
+from services.exportar_arvore import COLUNA_SEGMENTO
 
 _ROTULOS_PAI = {
     "gerencia": "Ger. Gestão",
@@ -92,6 +94,8 @@ def exportar_detalhe(args) -> tuple[str, bytes]:
         niveis = ("gerencia", "coordenacao", "supervisao")
         visiveis = hierarquia_contratos_visivel(args)
         colunas = [c for i, c in enumerate(COLUNAS_CONTRATOS) if i >= 3 or niveis[i] in visiveis]
+        if modo_macro(args):
+            colunas = [COLUNA_SEGMENTO] + colunas
         escrever_planilha(wb, "Contratos", colunas, linhas)
         return _nome("contratos", args), bytes_workbook(wb)
     adicionar_arvore(wb, args, grupos=True, lojas=True)

@@ -41,7 +41,7 @@ def erro_parametro(exc):
 
 @api_bp.get("/filtros")
 def filtros():
-    return jsonify(listar_filtros())
+    return jsonify(listar_filtros(request.args))
 
 
 @api_bp.get("/resumo")

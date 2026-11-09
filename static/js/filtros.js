@@ -1,6 +1,6 @@
 // Filtros em cascata: Ger. Gestao > Ger. Comercial III > Ger. Comercial
 import { buscar } from "./api.js";
-import { estado, nivelDerivado, nivelDerivadoDu } from "./estado.js";
+import { estado, nivelDerivado, nivelDerivadoDu, parametrosVisao } from "./estado.js";
 
 let opcoes = { gerencias: [], coordenacoes: [], supervisoes: [] };
 
@@ -34,15 +34,20 @@ function atualizarCascata() {
 }
 
 export function descricaoDe(nivel, chave) {
+    if (nivel === "segmento") return chave || "Todos os segmentos";
     const lista = { gerencia: "gerencias", coordenacao: "coordenacoes", supervisao: "supervisoes" }[nivel];
     const item = opcoes[lista].find((i) => String(i.chave) === String(chave));
     return item ? item.descricao : chave;
 }
 
 export async function iniciarFiltros(aoMudar) {
-    opcoes = await buscar("/api/filtros");
-    preencher(selGerencia(), opcoes.gerencias, "Todas");
-    atualizarCascata();
+    await recarregarOpcoes();
+    document.getElementById("filtro-segmento").addEventListener("change", (ev) => {
+        estado.segmento = ev.target.value;
+        estado.nivelEquipe = nivelDerivado();
+        estado.du.nivel = nivelDerivadoDu();
+        aoMudar();
+    });
 
     // Ao alterar um nivel superior, os inferiores sao limpos
     selGerencia().addEventListener("change", (ev) => {
@@ -81,7 +86,10 @@ export async function iniciarFiltros(aoMudar) {
 
 // Usado pelo drill-down da Equipe para selecionar um nivel via codigo
 export function selecionar(nivel, chave) {
-    if (nivel === "gerencia") {
+    if (nivel === "segmento") {
+        estado.segmento = chave;
+        document.getElementById("filtro-segmento").value = chave;
+    } else if (nivel === "gerencia") {
         estado.gerencia = String(chave);
         estado.coordenacao = "";
         estado.supervisao = "";
@@ -92,5 +100,15 @@ export function selecionar(nivel, chave) {
     } else {
         estado.supervisao = String(chave);
     }
+    atualizarCascata();
+}
+
+export async function recarregarOpcoes() {
+    opcoes = await buscar("/api/filtros", parametrosVisao());
+    preencher(selGerencia(), opcoes.gerencias, "Todas");
+    selGerencia().value = estado.gerencia;
+    preencher(document.getElementById("filtro-segmento"),
+        (opcoes.segmentos || []).map((nome) => ({ chave: nome, descricao: nome })), "Todos os segmentos");
+    document.getElementById("filtro-segmento").value = estado.segmento;
     atualizarCascata();
 }

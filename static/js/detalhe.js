@@ -155,6 +155,7 @@ function definirVisao(tipo, colunas, linhas) {
     $("detalhe-exportar").addEventListener("click", () =>
         baixarXlsx("/api/exportar/detalhe", {
             ...contexto.filtros,
+            segmento: trilha.find((passo) => passo.nivel === "segmento")?.valor || contexto.filtros.segmento,
             visao: contexto.contratosDireto ? "contratos" : "",
             busca: contexto.contratosDireto ? busca : "",
             incluir_sem_movimento: incluirSemMovimento ? "1" : "",

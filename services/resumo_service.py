@@ -1,5 +1,6 @@
 """KPIs do topo: producao, operacoes, averbacao, tentativas, conversao e cobertura."""
 from repositories.query_runner import run_query
+from services.visao_service import tokens_visao
 from services.filtros_comuns import (
     filtro_hierarquia,
     filtro_produto_producao,
@@ -20,19 +21,19 @@ def obter_resumo(args) -> dict:
     producao = run_query(
         "resumo_producao",
         params_h + [data_ini, data_fim] + params_pp,
-        {"FILTROS": frag_h, "PRODUTO": frag_pp},
+        {**tokens_visao(args), "FILTROS": frag_h, "PRODUTO": frag_pp},
     )[0]
 
     tentativas = run_query(
         "resumo_tentativas",
         params_h + [data_ini, data_fim] + params_pt,
-        {"FILTROS": frag_h, "PRODUTO": frag_pt},
+        {**tokens_visao(args), "FILTROS": frag_h, "PRODUTO": frag_pt},
     )[0]
 
     cobertura = run_query(
         "cobertura",
         params_h + [mes_ini, mes_fim, data_ini, data_fim] + params_pp,
-        {"FILTROS": frag_h, "PRODUTO": frag_pp},
+        {**tokens_visao(args), "FILTROS": frag_h, "PRODUTO": frag_pp},
     )[0]
 
     qtd_tent = int(tentativas["QTD_TENTATIVAS"])

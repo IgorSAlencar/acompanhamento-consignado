@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { agrupar, temMovimento, colunasGrupo } from "../static/js/detalhe-agrupar.js";
+import { agrupar, temMovimento, colunasGrupo, nivelInicial, filtrarPorTrilha } from "../static/js/detalhe-agrupar.js";
 import { htmlLinhaTotal } from "../static/js/detalhe-total.js";
 
 const loja = (chave, extra = {}) => ({
@@ -8,6 +8,18 @@ const loja = (chave, extra = {}) => ({
     ativa: true, qtd_tentativas: 0, qtd_convertidas: 0,
     qtd_averbado: 0, vlr_averbado: 0, qtd_aguardando: 0, vlr_aguardando: 0,
     qtd_nao_averbado: 0, vlr_nao_averbado: 0, ...extra,
+});
+
+test("macro abre por segmento e permite descer pela hierarquia comercial", () => {
+    assert.equal(nivelInicial({}), "gerencia");
+    assert.equal(nivelInicial({escopo: "macro"}), "segmento");
+    assert.equal(nivelInicial({escopo: "macro", segmento: "Ilha"}), "gerencia");
+    assert.equal(nivelInicial({escopo: "macro", segmento: "Ilha", gerencia: "1"}), "coordenacao");
+    const lojas = [loja(1, {segmento: "Ilha", qtd_averbado: 2}), loja(2, {segmento: "Exclusivo", qtd_averbado: 1})];
+    assert.equal(agrupar(lojas, "segmento").length, 2);
+    assert.deepEqual(filtrarPorTrilha(lojas, [{nivel: "segmento", valor: "Ilha"}]).map(l => l.chave_loja), [1]);
+    assert.equal(colunasGrupo("segmento", {escopo: "macro"})[0].chave, "segmento");
+    assert.equal(colunasGrupo("gerencia")[0].chave, "gerencia");
 });
 
 test("produção conta lojas distintas, inclusive inativas, e exclui só tentativas", () => {

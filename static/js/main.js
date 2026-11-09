@@ -11,6 +11,9 @@ import { carregarDu, iniciarDu } from "./du.js";
 import { atualizarPeriodoGeral } from "./periodo.js";
 import { iniciarAmpliacaoTabelas } from "./tabela-ampliada.js";
 import { iniciarConsultaContratos } from "./consultar-contratos.js";
+import { iniciarVisaoMacro } from "./visao-macro.js";
+
+let carregamentoAtual = Promise.resolve();
 
 const erroGlobal = () => document.getElementById("erro-global");
 
@@ -19,7 +22,12 @@ function mostrarErro(mensagem) {
     erroGlobal().classList.remove("oculto");
 }
 
-async function carregarTudo() {
+function carregarTudo() {
+    carregamentoAtual = carregarVisao();
+    return carregamentoAtual;
+}
+
+async function carregarVisao() {
     erroGlobal().classList.add("oculto");
 
     if (estado.modo === "du") {
@@ -95,6 +103,7 @@ async function iniciar() {
 
     try {
         await iniciarFiltros(carregarTudo);
+        iniciarVisaoMacro(carregarTudo, () => carregamentoAtual);
     } catch (erro) {
         mostrarErro(erro.message);
         return;

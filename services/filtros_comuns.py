@@ -1,5 +1,6 @@
 """Helpers compartilhados de filtros (hierarquia, loja, produto, situacao e periodo)."""
 from datetime import date, timedelta
+from services.visao_service import filtro_segmento, modo_macro
 
 PRODUTOS = ("INSS", "PRIVADO", "PUBLICO")
 
@@ -58,9 +59,12 @@ def filtro_hierarquia(args) -> tuple[str, list]:
     for campo, coluna in _CAMPOS_HIERARQUIA:
         valor = args.get(campo)
         if valor:
+            if modo_macro(args) and campo != "loja":
+                coluna = f"ISNULL({coluna}, 0)"
             fragmento += f" AND {coluna} = ?"
             params.append(int(valor))
-    return fragmento, params
+    segmento_sql, segmento_params = filtro_segmento(args)
+    return fragmento + segmento_sql, params + segmento_params
 
 
 def produto_selecionado(args) -> str | None:

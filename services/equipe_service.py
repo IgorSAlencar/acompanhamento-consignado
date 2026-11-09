@@ -1,9 +1,14 @@
 """Cockpit da equipe por nivel hierarquico, com drill-down, pais e chips de alerta."""
 from repositories.query_runner import run_query
+from services.visao_service import tokens_visao, nivel_visao, modo_macro
 from services.filtros_comuns import PRODUTOS, filtro_hierarquia, periodo, periodo_mes
 
 # Whitelist de niveis -> colunas (nunca vem do usuario)
 NIVEIS = {
+    "segmento": {
+        "chave": "L.SEGMENTO", "desc": "L.SEGMENTO", "rotulo": "Segmento",
+        "proximo": "gerencia", "cols_pais": "", "pais": [],
+    },
     "gerencia": {
         "chave": "L.CHAVE_GERENCIA_AREA",
         "desc": "L.DESC_GERENCIA_AREA",
@@ -51,15 +56,19 @@ def pais_visiveis(pais: list[str], args) -> list[str]:
 
 
 def obter_equipe(args) -> dict:
-    nivel = args.get("nivel") or "gerencia"
+    nivel = nivel_visao(args)
     if nivel not in NIVEIS:
         nivel = "gerencia"
-    config = NIVEIS[nivel]
+    config = dict(NIVEIS[nivel])
+    if modo_macro(args) and nivel != "segmento":
+        config["chave"] = f"ISNULL({config['chave']}, 0)"
+        config["desc"] = f"ISNULL({config['desc']}, 'Sem hierarquia')"
 
     frag_h, params_h = filtro_hierarquia(args)
     data_ini, data_fim = periodo(args)
     mes_ini, mes_fim = periodo_mes(data_ini, data_fim)
     tokens = {
+        **tokens_visao(args),
         "FILTROS": frag_h,
         "NIVEL_CHAVE": config["chave"],
         "NIVEL_DESC": config["desc"],
@@ -69,6 +78,13 @@ def obter_equipe(args) -> dict:
     cobertura = run_query("equipe_cobertura", params_h + [mes_ini, mes_fim, data_ini, data_fim], tokens)
     producao = run_query("equipe_producao", params_h + [data_ini, data_fim], tokens)
     tentativas = run_query("equipe_tentativas", params_h + [data_ini, data_fim], tokens)
+
+    if modo_macro(args):
+        presentes = {item["CHAVE"] for item in cobertura}
+        for item in producao + tentativas:
+            if item["CHAVE"] not in presentes:
+                cobertura.append({**item, "QTD_LOJAS": 0, "QTD_LOJAS_PRODUCAO": 0})
+                presentes.add(item["CHAVE"])
 
     linhas: dict[int, dict] = {}
     for item in cobertura:

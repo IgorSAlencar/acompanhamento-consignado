@@ -1,8 +1,9 @@
 """Opcoes dos filtros em cascata (Ger. Gestao > Ger. Comercial III > Ger. Comercial)."""
 from repositories.query_runner import run_query
+from services.visao_service import SEGMENTOS, modo_macro
 
 
-def listar_filtros() -> dict:
+def listar_filtros(args=None) -> dict:
     linhas = run_query("filtros_hierarquia")
 
     gerencias, coordenacoes, supervisoes = {}, {}, {}
@@ -17,7 +18,13 @@ def listar_filtros() -> dict:
             "coordenacao": linha["CHAVE_COORDENACAO"],
         }
 
+    macro = modo_macro(args or {})
+    if macro:
+        gerencias.setdefault(0, "Sem hierarquia")
+        coordenacoes.setdefault(0, {"descricao": "Sem hierarquia", "gerencia": 0})
+        supervisoes.setdefault(0, {"descricao": "Sem hierarquia", "coordenacao": 0})
     return {
+        "segmentos": list(SEGMENTOS) if macro else [],
         "gerencias": [
             {"chave": chave, "descricao": desc}
             for chave, desc in sorted(gerencias.items(), key=lambda i: i[1])

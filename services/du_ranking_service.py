@@ -5,6 +5,7 @@ dos meses anteriores no mesmo DU N ("saiu do padrao comportamental?").
 Universo = lojas que produziram (ou tentaram) em algum dos meses comparados.
 """
 from repositories.query_runner import run_query
+from services.visao_service import tokens_visao, nivel_visao
 from services.du_calendario import carregar_calendario, du_selecionado
 from services.du_padrao import DUS_PARADO_ALERTA, PESO_STATUS, classificar, desvio_percentual
 from services.filtros_comuns import (
@@ -15,6 +16,10 @@ from services.filtros_comuns import (
 
 # Whitelist de niveis -> colunas do resultado SQL (nunca vem do usuario)
 NIVEIS = {
+    "segmento": {
+        "chave": "SEGMENTO", "desc": "SEGMENTO", "rotulo": "Segmento",
+        "proximo": "gerencia", "pais": [],
+    },
     "gerencia": {
         "chave": "CHAVE_GERENCIA", "desc": "DESC_GERENCIA",
         "rotulo": "Ger. Gestão", "proximo": "coordenacao", "pais": [],
@@ -56,13 +61,13 @@ def _consultar_lojas(args, calendario, du, metrica):
         return run_query(
             "du_lojas_tentativas",
             params_h + [data_ini, data_fim, du, du, du, data_ini, data_fim] + params_p,
-            {"FILTROS": frag_h, "PRODUTO": frag_p},
+            {**tokens_visao(args), "FILTROS": frag_h, "PRODUTO": frag_p},
         )
     frag_p, params_p = filtro_produto_producao(args)
     return run_query(
         "du_lojas_producao",
         params_h + [data_ini, data_fim, du, du, du, du, du, data_ini, data_fim] + params_p,
-        {"FILTROS": frag_h, "PRODUTO": frag_p},
+        {**tokens_visao(args), "FILTROS": frag_h, "PRODUTO": frag_p},
     )
 
 
@@ -76,9 +81,11 @@ def _agregar(linhas_sql, config, metrica, meses_validos) -> dict:
         if mes not in validos:
             continue
         chave = linha[config["chave"]]
+        if chave is None:
+            chave = 0
         entidade = entidades.setdefault(chave, {
             "chave": chave,
-            "descricao": linha[config["desc"]],
+            "descricao": linha[config["desc"]] or "Sem hierarquia",
             "pai_gerencia": linha.get("DESC_GERENCIA"),
             "pai_coordenacao": linha.get("DESC_COORDENACAO"),
             "pai_supervisao": linha.get("DESC_SUPERVISAO"),
@@ -138,7 +145,7 @@ def _montar_linhas(entidades, calendario, du) -> list[dict]:
 
 
 def obter_ranking(args) -> dict:
-    nivel = args.get("nivel") or "gerencia"
+    nivel = nivel_visao(args)
     if nivel not in NIVEIS:
         nivel = "gerencia"
     metrica = (args.get("metrica") or "vlr").lower()

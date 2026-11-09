@@ -1,5 +1,6 @@
 """Rotina diaria da equipe: tentativas e producao de cada gerente, dia a dia."""
 from repositories.query_runner import run_query
+from services.visao_service import tokens_visao, nivel_visao, modo_macro
 from services.equipe_service import NIVEIS, pais_visiveis
 from services.filtros_comuns import (
     dias_do_periodo,
@@ -19,10 +20,13 @@ def _dia_vazio() -> dict:
 
 
 def obter_rotina(args) -> dict:
-    nivel = args.get("nivel") or "supervisao"
+    nivel = nivel_visao(args, "supervisao")
     if nivel not in NIVEIS:
         nivel = "supervisao"
-    config = NIVEIS[nivel]
+    config = dict(NIVEIS[nivel])
+    if modo_macro(args) and nivel != "segmento":
+        config["chave"] = f"ISNULL({config['chave']}, 0)"
+        config["desc"] = f"ISNULL({config['desc']}, 'Sem hierarquia')"
 
     frag_h, params_h = filtro_hierarquia(args)
     data_ini, data_fim = periodo(args)
@@ -30,6 +34,7 @@ def obter_rotina(args) -> dict:
     frag_pp, params_pp = filtro_produto_producao(args)
     frag_pt, params_pt = filtro_produto_tentativas(args)
     tokens = {
+        **tokens_visao(args),
         "FILTROS": frag_h,
         "NIVEL_CHAVE": config["chave"],
         "NIVEL_DESC": config["desc"],
@@ -47,6 +52,13 @@ def obter_rotina(args) -> dict:
         params_h + [data_ini, data_fim] + params_pp,
         {**tokens, "PRODUTO": frag_pp},
     )
+
+    if modo_macro(args):
+        presentes = {item["CHAVE"] for item in entidades}
+        for item in producao + tentativas:
+            if item["CHAVE"] not in presentes:
+                entidades.append({**item, "QTD_LOJAS": 0})
+                presentes.add(item["CHAVE"])
 
     dias = dias_do_periodo(data_ini, data_fim)
     linhas = {

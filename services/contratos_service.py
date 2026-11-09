@@ -1,5 +1,6 @@
 """Consulta de contratos do periodo, compartilhada com a exportacao."""
 from repositories.query_runner import run_query
+from services.visao_service import tokens_visao
 from services.filtros_comuns import (
     filtro_hierarquia, filtro_produto_producao, filtro_situacao,
     periodo, produto_do_indicador,
@@ -13,7 +14,7 @@ def parametros_consulta_contratos(args) -> tuple[list, dict]:
     frag_s, params_s = filtro_situacao(args)
     return (
         params_h + [data_ini, data_fim] + params_p + params_s,
-        {"FILTROS": frag_h, "PRODUTO": frag_p, "SITUACAO": frag_s},
+        {**tokens_visao(args), "FILTROS": frag_h, "PRODUTO": frag_p, "SITUACAO": frag_s},
     )
 
 
@@ -43,6 +44,7 @@ def _cpf(valor) -> str:
 
 def obter_contratos(args) -> list[dict]:
     linhas = [{
+        "segmento": c.get("SEGMENTO", ""),
         "gerencia": c["DESC_GERENCIA_AREA"],
         "coordenacao": c["DESC_COORDENACAO"],
         "supervisao": c["DESC_SUPERVISAO"],
@@ -55,6 +57,7 @@ def obter_contratos(args) -> list[dict]:
         "nsu": _identificador(c["NSU_TRX"]),
         "cpf": _cpf(c["CPF_CLIENTE"]),
         "valor": float(c["VLR_CONTRATO"]),
+        "motivo_dataprev": c["MOTIVO_DATAPREV"] or "",
     } for c in consultar_linhas_contratos(args)]
     busca = (args.get("busca") or "").strip().lower()
     if busca:

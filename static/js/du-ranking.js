@@ -115,6 +115,10 @@ function montarCabecalho() {
 function montarMigalhas() {
     const alvo = document.getElementById("du-migalhas");
     const partes = [{ rotulo: "Todas", nivel: "gerencia", chave: "" }];
+    if (estado.escopo === "macro") {
+        partes[0] = { rotulo: "Todos os segmentos", nivel: "segmento", chave: "" };
+        if (estado.segmento) partes.push({ rotulo: estado.segmento, nivel: "segmento", chave: estado.segmento });
+    }
     if (estado.gerencia) {
         partes.push({ rotulo: descricaoDe("gerencia", estado.gerencia), nivel: "gerencia", chave: estado.gerencia });
     }
@@ -124,7 +128,7 @@ function montarMigalhas() {
     if (estado.supervisao) {
         partes.push({ rotulo: descricaoDe("supervisao", estado.supervisao), nivel: "supervisao", chave: estado.supervisao });
     }
-    const proximo = { gerencia: "coordenacao", coordenacao: "supervisao", supervisao: "loja" };
+    const proximo = { segmento: "gerencia", gerencia: "coordenacao", coordenacao: "supervisao", supervisao: "loja" };
     alvo.innerHTML = "";
     partes.forEach((parte, i) => {
         if (i) {
@@ -142,7 +146,9 @@ function montarMigalhas() {
         } else {
             botao.addEventListener("click", () => {
                 selecionar(parte.nivel, parte.chave);
-                estado.du.nivel = parte.chave ? proximo[parte.nivel] : "gerencia";
+                if (parte.nivel === "segmento") selecionar("gerencia", "");
+                estado.du.nivel = parte.chave ? proximo[parte.nivel]
+                    : (estado.escopo === "macro" && !estado.segmento ? "segmento" : "gerencia");
                 controles.aoNavegar();
             });
         }

@@ -1,5 +1,6 @@
 """Serie diaria do grafico: averbado, aguardando, nao averbado e tentativas."""
 from repositories.query_runner import run_query
+from services.visao_service import tokens_visao
 from services.filtros_comuns import (
     dias_do_periodo,
     filtro_hierarquia,
@@ -18,12 +19,12 @@ def obter_serie(args) -> dict:
     producao = run_query(
         "serie_diaria",
         params_h + [data_ini, data_fim] + params_pp,
-        {"FILTROS": frag_h, "PRODUTO": frag_pp},
+        {**tokens_visao(args), "FILTROS": frag_h, "PRODUTO": frag_pp},
     )
     tentativas = run_query(
         "serie_tentativas",
         params_h + [data_ini, data_fim] + params_pt,
-        {"FILTROS": frag_h, "PRODUTO": frag_pt},
+        {**tokens_visao(args), "FILTROS": frag_h, "PRODUTO": frag_pt},
     )
     prod_dia = {l["DIA"].isoformat(): l for l in producao}
     tent_dia = {l["DIA"].isoformat(): l for l in tentativas}
